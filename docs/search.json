@@ -1,0 +1,184 @@
+[
+  {
+    "objectID": "incubation.html#clinical-onset",
+    "href": "incubation.html#clinical-onset",
+    "title": "Incubation Phase",
+    "section": "Clinical Onset",
+    "text": "Clinical Onset\nThe find_clinical_onset() function identifies first occurrence of score > 0 then creates new “Event” column with 1 at this date, 0’s before this date, and a value 3 after that date.\n\n\nHide code\nclin_start_df <- as.data.frame(\n  find_clinical_onset(antem_df)\n)\n\n\nQuick stats to check data\n\n\nHide code\nunique(clin_start_df$Event)\n\n\n[1] 0 1 3\n\n\nHide code\ncheck_stats <- clin_start_df %>%\n  filter(Event == 1 & censor_status == 1)\n\ndim(check_stats)\n\n\n[1] 13 16\n\n\nHide code\nrange(check_stats$dpe)\n\n\n[1] 2 5\n\n\nHide code\nmean(check_stats$dpe)\n\n\n[1] 3.076923\n\n\nHide code\nmedian(check_stats$dpe)\n\n\n[1] 3"
+  },
+  {
+    "objectID": "incubation.html#remove-group-1",
+    "href": "incubation.html#remove-group-1",
+    "title": "Incubation Phase",
+    "section": "Remove Group 1",
+    "text": "Remove Group 1\nGroup 1 was not infected and has no expectation of developing disease. Animals that were infected, verified by nasal, serum, or fever but never developed lesions are censored.\n\n\nHide code\nclin_start_df <- clin_start_df %>%\n filter(group != \"Group 1\",\n         Event == 1 | censor_status == 0 & censor_k == 1)\n\n\ncheck data\n\n\nHide code\nclin_start_df %>%\n  filter(Event == 1) %>%\n  summarise(mean_dpe = mean(dpe),\n            median_dpe = median(dpe))\n\n\n\n\n\n\nmean_dpe\nmedian_dpe\n\n\n\n\n3.076923\n3"
+  },
+  {
+    "objectID": "incubation.html#scale-time",
+    "href": "incubation.html#scale-time",
+    "title": "Incubation Phase",
+    "section": "Scale Time",
+    "text": "Scale Time\nAdd an arbitrarily small value to eliminate zeros. Really not need with his specific data set, by an important step.\n\n\nHide code\nclin_start_df$scaled_duration <- clin_start_df$dpe + 0.0001"
+  },
+  {
+    "objectID": "incubation.html#weighted-contacts",
+    "href": "incubation.html#weighted-contacts",
+    "title": "Incubation Phase",
+    "section": "Weighted Contacts",
+    "text": "Weighted Contacts\nContact with groups by donors was sequential at 24hr intervals, shedding rates (nasal swabs) varied over this period.\n\n\nHide code\nshed_rates <- antem_df %>%\n  filter(group == \"donor\") %>%\n  group_by(dpi) %>%\n  summarise(tot_shed = sum(ifelse(nasal == 45, 0, nasal))) %>%\n  mutate(group = paste(\"Group\", dpi, sep=\" \"))\n\n# match cumulative shed from donors based on time of contact\nclin_start_df$donor_shed <- with(shed_rates,\n                                 tot_shed[match(\n                                   clin_start_df$group,\n                                                 group)])\n\n# an integer index is needed for modeling purposes, group contacts are 1:1 correlated with time\nclin_start_df$shed_time <- as.integer(as.factor(clin_start_df$group))"
+  },
+  {
+    "objectID": "incubation.html#response-variable",
+    "href": "incubation.html#response-variable",
+    "title": "Incubation Phase",
+    "section": "Response Variable",
+    "text": "Response Variable\nCreating a survival object to ensure time and censored animals are correctly indicated.\n\n\nHide code\nsurv_obj <- inla.surv(clin_start_df$scaled_duration, clin_start_df$Event)"
+  },
+  {
+    "objectID": "incubation.html#survival-model",
+    "href": "incubation.html#survival-model",
+    "title": "Incubation Phase",
+    "section": "Survival Model",
+    "text": "Survival Model\n\n\nHide code\nreturn_quants <- c(0.025, 0.05, 0.25, 0.5, 0.75, 0.95, 0.975)\n\npc_prec_iid <- list(theta = list(prior=\"pc.prec\", \n                                 param=c(0.5, 0.001)))\n\nincubation_dur <- inla(surv_obj ~ 1 +\n                         f(shed_time, donor_shed,\n                           model = \"rw1\",\n                           constr=TRUE,\n                           hyper=pc_prec_iid),\n                        data = clin_start_df, \n                        verbose=FALSE,\n                        quantiles = return_quants,\n                        family = \"exponential.surv\",\n                        control.fixed = list(prec = 1, prec.intercept  =0.0001),\n                        control.compute=list(dic = TRUE, cpo = FALSE, waic = TRUE))"
+  },
+  {
+    "objectID": "incubation.html#sample-marginals",
+    "href": "incubation.html#sample-marginals",
+    "title": "Incubation Phase",
+    "section": "Sample Marginals",
+    "text": "Sample Marginals\nPerforming sampling on the model results\n\n\nHide code\nincubation_samples <- compute_survival_marginals(incubation_dur, 14)\n\n\nCheck estimates at the 0.5 probability (median)\n\n\nHide code\nmedian_incubation <- find_closest_quant(incubation_samples, 0.5)\nmedian_incubation\n\n\n$quant0.025\n[1] 1.501\n\n$quant0.25\n[1] 2.301\n\n$quant0.5\n[1] 2.901\n\n$quant0.75\n[1] 3.601\n\n$quant0.975\n[1] 5.901"
+  },
+  {
+    "objectID": "incubation.html#survival-curve",
+    "href": "incubation.html#survival-curve",
+    "title": "Incubation Phase",
+    "section": "Survival Curve",
+    "text": "Survival Curve\n\n\nHide code\nplot_survival_marginals(incubation_samples, x_max = 14, xlabel = \"Incubation Phase Duration\")\n\n\n\n\n\nsave incubation samples\n\n\nHide code\nsaveRDS(incubation_samples, here(\"assets/incubation_samples.rds\"))\nsaveRDS(median_incubation, here(\"assets/incubation_median.rds\"))"
+  },
+  {
+    "objectID": "latent.html#shedding-threshold",
+    "href": "latent.html#shedding-threshold",
+    "title": "Latent Phase",
+    "section": "Shedding Threshold",
+    "text": "Shedding Threshold\nPublished FMDV shedding estimate is around 3.92\n\n\nHide code\ndonor_thresh <- antem_df %>%\n  filter(group == \"donor\" & dpi == 2) # day of contact with Group 2\n\ndonor_thresh$nasal\n\n\n[1] 3.706999 6.411625\n\n\nHide code\nmean(donor_thresh$nasal)\n\n\n[1] 5.059312\n\n\nDesignate end of latent based on shed rate.\n\n\nHide code\nlatent_end_df <- antem_df %>%\n  filter(nasal >= 3.92 & nasal != 45) %>%\n  group_by(animal) %>%\n  filter(date == min(date)) %>%\n  mutate(latent_end = 1) %>%\n  ungroup()\n\n\nQuick stats to check data\n\n\nHide code\nlatent_end_df %>%\n  summarise(mean_dpe = mean(dpe),\n            median_dpe = median(dpe),\n            min_range = min(dpe),\n            max_range = max(dpe))\n\n\n\n\n\n\nmean_dpe\nmedian_dpe\nmin_range\nmax_range\n\n\n\n\n1.428571\n1\n1\n4"
+  },
+  {
+    "objectID": "latent.html#scale-time",
+    "href": "latent.html#scale-time",
+    "title": "Latent Phase",
+    "section": "Scale Time",
+    "text": "Scale Time\nAdd an arbitrarily small value to eliminate zeros. Really not need with his specific data set, by an important step.\n\n\nHide code\nlatent_end_df$scaled_duration <- latent_end_df$dpe + 0.0001"
+  },
+  {
+    "objectID": "latent.html#scale-serum",
+    "href": "latent.html#scale-serum",
+    "title": "Latent Phase",
+    "section": "Scale Serum",
+    "text": "Scale Serum\nScaling serum as potential covariate.\n\n\nHide code\nlatent_end_df$serum_0 <- latent_end_df$serum\nlatent_end_df$serum_0[latent_end_df$serum_0 == 45] = 0\nlatent_end_df$serum_0 <- as.numeric(scale(latent_end_df$serum_0, scale = T, center = F))"
+  },
+  {
+    "objectID": "latent.html#response-variable",
+    "href": "latent.html#response-variable",
+    "title": "Latent Phase",
+    "section": "Response Variable",
+    "text": "Response Variable\nCreating a survival object to ensure time and censored animals are correctly indicated.\n\n\nHide code\nsurv_obj <- inla.surv(latent_end_df$scaled_duration, latent_end_df$latent_end)"
+  },
+  {
+    "objectID": "latent.html#survival-model",
+    "href": "latent.html#survival-model",
+    "title": "Latent Phase",
+    "section": "Survival Model",
+    "text": "Survival Model\n\n\nHide code\nreturn_quants <- c(0.025, 0.05, 0.25, 0.5, 0.75, 0.95, 0.975)\n\nlatent_end_mod <- inla(surv_obj ~ 1 + serum_0,\n                        data = latent_end_df, \n                        verbose=FALSE,\n                        quantiles = return_quants,\n                        family = \"exponential.surv\",\n                        control.fixed = list(prec = 1, prec.intercept  = 0.001),\n                        control.compute=list(dic = TRUE, cpo = FALSE, waic = TRUE))"
+  },
+  {
+    "objectID": "latent.html#sample-marginals",
+    "href": "latent.html#sample-marginals",
+    "title": "Latent Phase",
+    "section": "Sample Marginals",
+    "text": "Sample Marginals\nPerforming sampling on the model results\n\n\nHide code\nlatent_samples <- compute_survival_marginals(latent_end_mod, 5)\n\n\nCheck estimates at the 0.5 probability (median)\n\n\nHide code\nmedian_latent <- find_closest_quant(latent_samples, 0.5)\nmedian_latent\n\n\n$quant0.025\n[1] 0.501\n\n$quant0.25\n[1] 0.901\n\n$quant0.5\n[1] 1.201\n\n$quant0.75\n[1] 1.501\n\n$quant0.975\n[1] 2.501"
+  },
+  {
+    "objectID": "latent.html#survival-curve",
+    "href": "latent.html#survival-curve",
+    "title": "Latent Phase",
+    "section": "Survival Curve",
+    "text": "Survival Curve\n\n\nHide code\nplot_survival_marginals(latent_samples, x_max = 5, xlabel = \"Latent Phase Duration\")\n\n\n\n\n\nsave latent samples\n\n\nHide code\nsaveRDS(latent_samples, here(\"assets/latent_samples.rds\"))\nsaveRDS(median_latent, here(\"assets/latent_median.rds\"))"
+  },
+  {
+    "objectID": "latent.html#calculate-subclinical",
+    "href": "latent.html#calculate-subclinical",
+    "title": "Latent Phase",
+    "section": "Calculate Subclinical",
+    "text": "Calculate Subclinical\n\n\nHide code\n# from other analysis\nincubation_samples <- readRDS(here(\"assets/incubation_samples.rds\"))\nmedian_incubation <- readRDS(here(\"assets/incubation_median.rds\"))\n \nmedian_subclinical <- Map(function(x, y) x - y, median_incubation, median_latent)\n\nmedians_df <- as.data.frame(\n  rbind(\n    Incubation = as.data.frame(median_incubation),\n    Subclinical = as.data.frame(median_subclinical),\n    Latent = as.data.frame(median_latent)\n  )\n)\n\nmedians_df\n\n\n\n\n\n\n\nquant0.025\nquant0.25\nquant0.5\nquant0.75\nquant0.975\n\n\n\n\nIncubation\n1.501\n2.301\n2.901\n3.601\n5.901\n\n\nSubclinical\n1.000\n1.400\n1.700\n2.100\n3.400\n\n\nLatent\n0.501\n0.901\n1.201\n1.501\n2.501\n\n\n\n\n\n\nHide code\nmedians_df$Name <- rownames(medians_df)\nmedians_df$Name <- ordered(factor(medians_df$Name), c(\"Latent\", \"Subclinical\", \"Incubation\"))\n\n\nPlot median phases\n\n\nHide code\nplot_median_phases(medians_df)\n\n\nWarning: Using `size` aesthetic for lines was deprecated in ggplot2 3.4.0.\nℹ Please use `linewidth` instead.\n\n\n\n\n\nPlot subclinical curve.\n\n\nHide code\nplot_compare_marginals(incubation_samples, latent_samples)"
+  },
+  {
+    "objectID": "preprocess.html",
+    "href": "preprocess.html",
+    "title": "Preprocessing",
+    "section": "",
+    "text": "Hide code\nlibrary(tidyverse)\nlibrary(INLA)\nlibrary(here)\nlibrary(pals)"
+  },
+  {
+    "objectID": "preprocess.html#custom-functions",
+    "href": "preprocess.html#custom-functions",
+    "title": "Preprocessing",
+    "section": "Custom Functions",
+    "text": "Custom Functions\n\n\nHide code\nsource(here(\"R/utilities.R\"))\nsource_dir(here(\"R\"))"
+  },
+  {
+    "objectID": "preprocess.html#read-data",
+    "href": "preprocess.html#read-data",
+    "title": "Preprocessing",
+    "section": "Read Data",
+    "text": "Read Data\n\n\nHide code\nantem_df <- read_csv(here(\"local/bov_antemortem_2024.csv\"))\n\n# minimum date\nmin_date <- min(antem_df$date)\nmin_date # date of donor inoculation\n\n\n[1] \"2023-06-26\"\n\n\nHide code\n# add variables \nantem_df <- antem_df %>%\n  mutate(hpdi = as.numeric(difftime(date, min_date, units = \"hours\")), # hours post donor inoculation \n         hpe = dpe*24, # convert dpe to hpe\n         exp_type = if_else(group == \"donor\", \"inoc\", \"cont\"), # exposed by inoculation or direct contact\n         fever = if_else(temp >= 104, \"fever\", \"no_fever\"), # temp >= 104 constitutes fever\n         censor_status = if_else(group == \"Group 1\" | animal == \"BR23-24\", 0, 1), # No obs symptoms (0) in these \n  )\n\ndim(antem_df)\n\n\n[1] 168  14"
+  },
+  {
+    "objectID": "preprocess.html#plots-to-check-data",
+    "href": "preprocess.html#plots-to-check-data",
+    "title": "Preprocessing",
+    "section": "Plots to Check Data",
+    "text": "Plots to Check Data\n\nDonors\n\n\nHide code\nplot_donors(antem_df)\n\n\n\n\n\n\n\nContact Groups\n\n\nHide code\nplot_contact_groups(antem_df)"
+  },
+  {
+    "objectID": "longitudinal.html#organize-data",
+    "href": "longitudinal.html#organize-data",
+    "title": "Longitudinal Analysis",
+    "section": "Organize Data",
+    "text": "Organize Data\n\n\nHide code\nlongitud_df <- antem_df %>%\n  mutate(y_shed = if_else(nasal == 0 | nasal == 45, NA, nasal),\n         y_serum = if_else(serum == 0 | serum == 45, NA, serum),\n         temp_sc = as.numeric(scale(temp, scale = TRUE, center = TRUE)),\n         time_step = dpe + 1)\n\n#plot(density(longitud_df$y_serum, na.rm=T)) # ~normal"
+  },
+  {
+    "objectID": "longitudinal.html#shedding-rates",
+    "href": "longitudinal.html#shedding-rates",
+    "title": "Longitudinal Analysis",
+    "section": "Shedding Rates",
+    "text": "Shedding Rates\nRun model for shedding (nasal swabs)\n\n\nHide code\nreturn_quants <- c(0.025, 0.05, 0.25, 0.5, 0.75, 0.95, 0.975)\n\npc_prec_rw <- list(theta = list(prior=\"pc.prec\", \n                                 param=c(1, 0.001)))\n\npc_prec_iid <- list(theta = list(prior=\"pc.prec\", \n                                 param=c(3, 0.001)))\n\nshed_form <- y_shed ~ 1 + f(time_step,\n                             model = \"rw1\",\n                             constr = TRUE,\n                             scale.model = TRUE,\n                             hyper=pc_prec_rw) +\n                           f(animal,\n                             model = \"iid\",\n                             constr=TRUE,\n                             hyper=pc_prec_iid) + \n                           f(exp_type, \n                             model = \"iid\",\n                             constr=TRUE,\n                             hyper=pc_prec_iid) +\n                             temp \n\nshed_model <- inla(shed_form, \n                   data = longitud_df, \n                   family = \"gaussian\",\n                   quantiles = return_quants,\n                   verbose=FALSE,\n                   control.compute=list(dic = TRUE, cpo = FALSE, waic = TRUE))\n\n# summary(shed_model)\n\n\nPlot animals\n\n\nHide code\nanimal_df <- shed_model$summary.random$animal[, c(1, 4:10)]\nnames(animal_df) <- c(\"Animal\", \"Q_0.025\", \"Q_0.05\", \"Q_0.25\", \"Q_0.5\", \"Q_0.75\", \"Q_0.95\", \"Q_0.975\")\n\nplot_animals_linerange(animal_df)\n\n\nWarning: Using `size` aesthetic for lines was deprecated in ggplot2 3.4.0.\nℹ Please use `linewidth` instead.\n\n\n\n\n\nPlot exposure type\n\n\nHide code\nexptype_df <- shed_model$summary.random$exp_type[, c(1, 4:10)]\nnames(exptype_df) <- c(\"type\", \"Q_0.025\", \"Q_0.05\", \"Q_0.25\", \"Q_0.5\", \"Q_0.75\", \"Q_0.95\", \"Q_0.975\") \nexptype_df$type <- as.factor(exptype_df$type)\n\nlevels(exptype_df$type) <- c(\"Contact\", \"Inoculation\")\n\nplot_exposure_linerange(exptype_df)\n\n\n\n\n\nFixed effects coefficients\n\n\nHide code\ntemp_post <- shed_model$marginals.fixed \n\nnames(temp_post)\n\n\n[1] \"(Intercept)\" \"temp\"       \n\n\nTemperature\n\n\nHide code\nplot_fixed_posterior(temp_post, model = shed_model, xlabel = \"Temperature\", fixed_eff = \"temp\")\n\n\n\n\n\nIntercept\n\n\nHide code\nplot_fixed_posterior(temp_post, model = shed_model, xlabel = \"Intercept\", fixed_eff = \"(Intercept)\")"
+  },
+  {
+    "objectID": "longitudinal.html#serum",
+    "href": "longitudinal.html#serum",
+    "title": "Longitudinal Analysis",
+    "section": "Serum",
+    "text": "Serum\nRun model for serum\n\n\nHide code\npc_prec_rw <- list(theta = list(prior=\"pc.prec\", \n                                 param=c(1, 0.001)))\n\npc_prec_iid <- list(theta = list(prior=\"pc.prec\", \n                                 param=c(3, 0.001)))\n\nserum_form <- y_serum ~ 1 + f(time_step,\n                               model = \"rw1\",\n                               constr = TRUE,\n                               scale.model = TRUE,\n                               hyper=pc_prec_rw) +\n                             f(animal,\n                               model = \"iid\",\n                               constr=TRUE,\n                               hyper=pc_prec_iid) + \n                             f(exp_type, \n                               model = \"iid\",\n                               constr=TRUE,\n                               hyper=pc_prec_iid) +\n                               temp_sc \n\nserum_model <- inla(serum_form, \n                   data = longitud_df, \n                   family = \"gaussian\",\n                   quantiles = return_quants,\n                   verbose=FALSE,\n                   control.compute=list(dic = TRUE, cpo = FALSE, waic = TRUE))\n\n# summary(serum_model)\n\n\nPlot animals\n\n\nHide code\nanimal_df <- serum_model$summary.random$animal[, c(1, 4:10)]\nnames(animal_df) <- c(\"Animal\", \"Q_0.025\", \"Q_0.05\", \"Q_0.25\", \"Q_0.5\", \"Q_0.75\", \"Q_0.95\", \"Q_0.975\")\n\nplot_animals_linerange(animal_df)\n\n\n\n\n\nPlot exposure type\n\n\nHide code\nexptype_df <- serum_model$summary.random$exp_type[, c(1, 4:10)]\nnames(exptype_df) <- c(\"type\", \"Q_0.025\", \"Q_0.05\", \"Q_0.25\", \"Q_0.5\", \"Q_0.75\", \"Q_0.95\", \"Q_0.975\") \nexptype_df$type <- as.factor(exptype_df$type)\n\nlevels(exptype_df$type) <- c(\"Contact\", \"Inoculation\")\n\nplot_exposure_linerange(exptype_df)\n\n\n\n\n\nFixed effects coefficients\n\n\nHide code\ntemp_post <- serum_model$marginals.fixed \n\nnames(temp_post)\n\n\n[1] \"(Intercept)\" \"temp_sc\"    \n\n\nTemperature\n\n\nHide code\nplot_fixed_posterior(temp_post, model = serum_model, xlabel = \"Temperature\", fixed_eff = \"temp_sc\")\n\n\n\n\n\nIntercept\n\n\nHide code\nplot_fixed_posterior(temp_post, model = serum_model, xlabel = \"Intercept\", fixed_eff = \"(Intercept)\")"
+  },
+  {
+    "objectID": "longitudinal.html#lesion-score",
+    "href": "longitudinal.html#lesion-score",
+    "title": "Longitudinal Analysis",
+    "section": "Lesion Score",
+    "text": "Lesion Score\nRun model for lesion score\n\n\nHide code\npc_prec_rw <- list(theta = list(prior=\"pc.prec\", \n                                 param=c(1, 0.001)))\n\npc_prec_iid <- list(theta = list(prior=\"pc.prec\", \n                                 param=c(3, 0.001)))\n\nscore_form <- score ~ 1 + f(time_step,\n                               model = \"rw1\",\n                               constr = TRUE,\n                               scale.model = TRUE,\n                               hyper=pc_prec_rw) +\n                             f(animal,\n                               model = \"iid\",\n                               constr=TRUE,\n                               hyper=pc_prec_iid) + \n                             f(exp_type, \n                               model = \"iid\",\n                               constr=TRUE,\n                               hyper=pc_prec_iid) +\n                               temp \n\nscore_model <- inla(score_form, \n                   data = longitud_df, \n                   family = \"gaussian\",\n                   quantiles = return_quants,\n                   verbose=FALSE,\n                   control.compute=list(dic = TRUE, cpo = FALSE, waic = TRUE))\n\n# summary(score_model)\n\n\nPlot animals\n\n\nHide code\nanimal_df <- score_model$summary.random$animal[, c(1, 4:10)]\nnames(animal_df) <- c(\"Animal\", \"Q_0.025\", \"Q_0.05\", \"Q_0.25\", \"Q_0.5\", \"Q_0.75\", \"Q_0.95\", \"Q_0.975\")\n\nplot_animals_linerange(animal_df)\n\n\n\n\n\nPlot exposure type\n\n\nHide code\nexptype_df <- score_model$summary.random$exp_type[, c(1, 4:10)]\nnames(exptype_df) <- c(\"type\", \"Q_0.025\", \"Q_0.05\", \"Q_0.25\", \"Q_0.5\", \"Q_0.75\", \"Q_0.95\", \"Q_0.975\") \nexptype_df$type <- as.factor(exptype_df$type)\n\nlevels(exptype_df$type) <- c(\"Contact\", \"Inoculation\")\n\nplot_exposure_linerange(exptype_df)\n\n\n\n\n\nFixed effects coefficients\n\n\nHide code\ntemp_post <- score_model$marginals.fixed \n\nnames(temp_post)\n\n\n[1] \"(Intercept)\" \"temp\"       \n\n\nTemperature\n\n\nHide code\nplot_fixed_posterior(temp_post, model = score_model, xlabel = \"Temperature\", fixed_eff = \"temp\")\n\n\n\n\n\nIntercept\n\n\nHide code\nplot_fixed_posterior(temp_post, model = score_model, xlabel = \"Intercept\", fixed_eff = \"(Intercept)\")"
+  },
+  {
+    "objectID": "longitudinal.html#temperature",
+    "href": "longitudinal.html#temperature",
+    "title": "Longitudinal Analysis",
+    "section": "Temperature",
+    "text": "Temperature\nRun model for body temperature\n\n\nHide code\nlongitud_df$y_temper <- as.numeric(scale(longitud_df$temp, scale=TRUE, center=TRUE))\n\npc_prec_rw <- list(theta = list(prior=\"pc.prec\", \n                                 param=c(1, 0.001)))\n\npc_prec_iid <- list(theta = list(prior=\"pc.prec\", \n                                 param=c(3, 0.001)))\n\ntemper_form <- y_temper ~ -1 + f(time_step,\n                                 model = \"rw1\",\n                                 constr = TRUE,\n                                 scale.model = TRUE,\n                                 hyper=pc_prec_rw) +\n                                f(animal,\n                                 model = \"iid\",\n                                 constr=TRUE,\n                                 hyper=pc_prec_iid) + \n                                f(exp_type, \n                                 model = \"iid\",\n                                 constr=TRUE,\n                                 hyper=pc_prec_iid) +\n                              score\n\ntemper_model <- inla(temper_form, \n                   data = longitud_df, \n                   family = \"gaussian\",\n                   quantiles = return_quants,\n                   verbose=FALSE,\n                   control.compute=list(dic = TRUE, cpo = FALSE, waic = TRUE))\n\n# summary(temper_model)\n\n\nPlot animals\n\n\nHide code\nanimal_df <- temper_model$summary.random$animal[, c(1, 4:10)]\nnames(animal_df) <- c(\"Animal\", \"Q_0.025\", \"Q_0.05\", \"Q_0.25\", \"Q_0.5\", \"Q_0.75\", \"Q_0.95\", \"Q_0.975\")\n\nplot_animals_linerange(animal_df)\n\n\n\n\n\nPlot exposure type\n\n\nHide code\nexptype_df <- temper_model$summary.random$exp_type[, c(1, 4:10)]\nnames(exptype_df) <- c(\"type\", \"Q_0.025\", \"Q_0.05\", \"Q_0.25\", \"Q_0.5\", \"Q_0.75\", \"Q_0.95\", \"Q_0.975\") \nexptype_df$type <- as.factor(exptype_df$type)\n\nlevels(exptype_df$type) <- c(\"Contact\", \"Inoculation\")\n\nplot_exposure_linerange(exptype_df)\n\n\n\n\n\nFixed effects coefficients\n\n\nHide code\ntemp_post <- temper_model$marginals.fixed \n\nnames(temp_post)\n\n\n[1] \"score\"\n\n\nScore\n\n\nHide code\nplot_fixed_posterior(temp_post, model = temper_model, xlabel = \"Score\", fixed_eff = \"score\")"
+  },
+  {
+    "objectID": "subclinical.html#calculate-subclinical",
+    "href": "subclinical.html#calculate-subclinical",
+    "title": "Subclinical Phase",
+    "section": "Calculate Subclinical",
+    "text": "Calculate Subclinical\n\n\nHide code\n# from other analysis\nincubation_samples <- readRDS(here(\"assets/incubation_samples.rds\"))\nlatent_samples <- readRDS(here(\"assets/latent_samples.rds\"))\nmedian_incubation <- readRDS(here(\"assets/incubation_median.rds\"))\nmedian_latent <- readRDS(here(\"assets/latent_median.rds\"))\n \nmedian_subclinical <- Map(function(x, y) x - y, median_incubation, median_latent)\n\nmedians_df <- as.data.frame(\n  rbind(\n    Incubation = as.data.frame(median_incubation),\n    Subclinical = as.data.frame(median_subclinical),\n    Latent = as.data.frame(median_latent)\n  )\n)\n\nmedians_df\n\n\n\n\n\n\n\nquant0.025\nquant0.25\nquant0.5\nquant0.75\nquant0.975\n\n\n\n\nIncubation\n1.501\n2.301\n2.901\n3.601\n5.901\n\n\nSubclinical\n1.000\n1.400\n1.700\n2.100\n3.400\n\n\nLatent\n0.501\n0.901\n1.201\n1.501\n2.501\n\n\n\n\n\n\nHide code\nmedians_df$Name <- rownames(medians_df)\nmedians_df$Name <- ordered(factor(medians_df$Name), c(\"Latent\", \"Subclinical\", \"Incubation\"))\n\n\nPlot median phases\n\n\nHide code\nplot_median_phases(medians_df)\n\n\n\n\n\nPlot subclinical curve.\n\n\nHide code\nplot_compare_marginals(incubation_samples, latent_samples)"
+  }
+]
