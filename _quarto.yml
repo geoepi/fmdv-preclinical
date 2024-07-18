@@ -1,0 +1,33 @@
+project:
+  type: website
+  output-dir: docs
+  
+website: 
+  title: "FMDV Preclinical"
+  navbar:
+    left:
+      - href: preprocess.qmd
+        text: Preprocessing 
+      - href: incubation.qmd
+        text: Incubation Phase
+      - href: latent.qmd
+        text: Latent Phase
+      - href: subclinical.qmd
+        text: Subclinical Phase
+      - href: longitudinal.qmd
+        text: Longitudinal
+    right:
+      - href: https://geoepi.github.io/
+        text: GeoEpi
+      - icon: github
+        href: https://github.com/geoepi/fmdv-preclinical
+  page-footer:
+    right: "Built with [Quarto](https://quarto.org/)"
+
+format:
+  html:
+    theme: lux
+    toc: true
+    
+editor: source
+

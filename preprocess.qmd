@@ -1,0 +1,84 @@
+---
+title: "Preprocessing"
+description: "Load and format experimental data for analysis."
+format:
+  html: 
+    df-print: kable
+    code-fold: show
+    code-summary: "Hide code"
+    code-overflow: wrap
+    toc-title: Page Contents
+    toc: true
+    toc-depth: 2
+    toc-location: right
+    number-sections: false
+    html-math-method: katex
+    smooth-scroll: true
+editor: source
+editor_options: 
+  chunk_output_type: console
+---
+```{=html}
+<style type="text/css">
+
+body, td {
+   font-size: 13pt;
+}
+code.r{
+  font-size: 9pt;
+}
+pre {
+  font-size: 11pt
+}
+</style>
+```
+
+## Libraries
+```{r, warning=FALSE, message=FALSE}
+library(tidyverse)
+library(INLA)
+library(here)
+library(pals)
+```
+
+## Custom Functions
+```{r}
+source(here("R/utilities.R"))
+source_dir(here("R"))
+```
+
+## Read Data  
+```{r warning=FALSE, message=FALSE}
+antem_df <- read_csv(here("local/bov_antemortem_2024.csv"))
+
+# minimum date
+min_date <- min(antem_df$date)
+min_date # date of donor inoculation
+
+# add variables 
+antem_df <- antem_df %>%
+  mutate(hpdi = as.numeric(difftime(date, min_date, units = "hours")), # hours post donor inoculation 
+         hpe = dpe*24, # convert dpe to hpe
+         exp_type = if_else(group == "donor", "inoc", "cont"), # exposed by inoculation or direct contact
+         fever = if_else(temp >= 104, "fever", "no_fever"), # temp >= 104 constitutes fever
+         censor_status = if_else(group == "Group 1" | animal == "BR23-24", 0, 1), # No obs symptoms (0) in these 
+  )
+
+dim(antem_df)
+```
+
+
+## Plots to Check Data  
+
+### Donors  
+```{r fig.width=8, fig.height=8, warning=FALSE, message=FALSE}
+plot_donors(antem_df)
+```
+
+
+
+### Contact Groups
+```{r fig.width=8, fig.height=8, warning=FALSE, message=FALSE}
+plot_contact_groups(antem_df)
+```
+

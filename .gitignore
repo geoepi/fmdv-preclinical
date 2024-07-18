@@ -47,3 +47,11 @@ po/*~
 
 # RStudio Connect folder
 rsconnect/
+
+# secrets
+secrets.yaml
+
+# local data
+/local
+
+/.quarto/

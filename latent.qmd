@@ -1,0 +1,149 @@
+---
+title: "Latent Phase"
+description: "Parmetric survival model for latent phase durataion"
+format:
+  html: 
+    df-print: kable
+    code-fold: show
+    code-summary: "Hide code"
+    code-overflow: wrap
+    toc-title: Page Contents
+    toc: true
+    toc-depth: 2
+    toc-location: right
+    number-sections: false
+    html-math-method: katex
+    smooth-scroll: true
+editor: source
+editor_options: 
+  chunk_output_type: console
+---
+```{=html}
+<style type="text/css">
+
+body, td {
+   font-size: 13pt;
+}
+code.r{
+  font-size: 9pt;
+}
+pre {
+  font-size: 11pt
+}
+</style>
+```
+
+```{r, warning=FALSE, message=FALSE, echo=FALSE}
+library(tidyverse)
+options(dplyr.summarise.inform = FALSE)
+
+library(INLA)
+library(here)
+library(pals)
+
+## Custom Functions
+source(here("R/utilities.R"))
+source_dir(here("R"))
+
+## Read Data  
+antem_df <- read_csv(here("local/bov_antemortem_2024.csv"))
+
+# minimum date
+min_date <- min(antem_df$date)
+
+# add variables 
+antem_df <- antem_df %>%
+  mutate(hpdi = as.numeric(difftime(date, min_date, units = "hours")), # hours post donor inoculation 
+         hpe = dpe*24, # convert dpe to hpe
+         exp_type = if_else(group == "donor", "inoc", "cont"), # exposed by inoculation or direct contact
+         fever = if_else(temp >= 104, "fever", "no_fever"), # temp >= 104 constitutes fever
+         censor_status = if_else(group == "Group 1" | animal == "BR23-24", 0, 1), # No obs symptoms (0) in these 
+  )
+
+```
+
+## Shedding Threshold
+Published FMDV shedding estimate is around 3.92 
+```{r}
+donor_thresh <- antem_df %>%
+  filter(group == "donor" & dpi == 2) # day of contact with Group 2
+
+donor_thresh$nasal
+mean(donor_thresh$nasal)
+```
+
+Designate end of latent based on shed rate.
+```{r}
+latent_end_df <- antem_df %>%
+  filter(nasal >= 3.92 & nasal != 45) %>%
+  group_by(animal) %>%
+  filter(date == min(date)) %>%
+  mutate(latent_end = 1) %>%
+  ungroup()
+```
+
+Quick stats to check data
+```{r}
+latent_end_df %>%
+  summarise(mean_dpe = mean(dpe),
+            median_dpe = median(dpe),
+            min_range = min(dpe),
+            max_range = max(dpe))
+```
+  
+## Scale Time
+Add an arbitrarily small value to eliminate zeros.  Really not need with his specific data set, by an important step.  
+```{r}
+latent_end_df$scaled_duration <- latent_end_df$dpe + 0.0001
+```
+  
+## Scale Serum
+Scaling serum as potential covariate.   
+```{r}
+latent_end_df$serum_0 <- latent_end_df$serum
+latent_end_df$serum_0[latent_end_df$serum_0 == 45] = 0
+latent_end_df$serum_0 <- as.numeric(scale(latent_end_df$serum_0, scale = T, center = F))
+```
+
+## Response Variable
+Creating a survival object to ensure time and censored animals are correctly indicated.
+```{r}
+surv_obj <- inla.surv(latent_end_df$scaled_duration, latent_end_df$latent_end)
+```
+
+## Survival Model
+```{r}
+return_quants <- c(0.025, 0.05, 0.25, 0.5, 0.75, 0.95, 0.975)
+
+latent_end_mod <- inla(surv_obj ~ 1 + serum_0,
+                        data = latent_end_df, 
+                        verbose=FALSE,
+                        quantiles = return_quants,
+                        family = "exponential.surv",
+                        control.fixed = list(prec = 1, prec.intercept  = 0.001),
+                        control.compute=list(dic = TRUE, cpo = FALSE, waic = TRUE))
+
+```
+
+## Sample Marginals
+Performing sampling on the model results
+```{r}
+latent_samples <- compute_survival_marginals(latent_end_mod, 5)
+```
+
+Check estimates at the 0.5 probability (median)  
+```{r}
+median_latent <- find_closest_quant(latent_samples, 0.5)
+median_latent
+```
+
+## Survival Curve
+```{r fig.width=8, fig.height=6}
+plot_survival_marginals(latent_samples, x_max = 5, xlabel = "Latent Phase Duration")
+```
+  
+save latent samples
+```{r eval=FALSE}
+saveRDS(latent_samples, here("assets/latent_samples.rds"))
+saveRDS(median_latent, here("assets/latent_median.rds"))
+```

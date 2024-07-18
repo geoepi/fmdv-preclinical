@@ -1,0 +1,176 @@
+---
+title: "Incubation Phase"
+description: "Parmetric survival model for incubation phase durataion"
+format:
+  html: 
+    df-print: kable
+    code-fold: show
+    code-summary: "Hide code"
+    code-overflow: wrap
+    toc-title: Page Contents
+    toc: true
+    toc-depth: 2
+    toc-location: right
+    number-sections: false
+    html-math-method: katex
+    smooth-scroll: true
+editor: source
+editor_options: 
+  chunk_output_type: console
+---
+```{=html}
+<style type="text/css">
+
+body, td {
+   font-size: 13pt;
+}
+code.r{
+  font-size: 9pt;
+}
+pre {
+  font-size: 11pt
+}
+</style>
+```
+
+```{r, warning=FALSE, message=FALSE, echo=FALSE}
+library(tidyverse)
+options(dplyr.summarise.inform = FALSE)
+
+library(INLA)
+library(here)
+library(pals)
+
+## Custom Functions
+source(here("R/utilities.R"))
+source_dir(here("R"))
+
+## Read Data  
+antem_df <- read_csv(here("local/bov_antemortem_2024.csv"))
+
+# minimum date
+min_date <- min(antem_df$date)
+
+# add variables 
+antem_df <- antem_df %>%
+  mutate(hpdi = as.numeric(difftime(date, min_date, units = "hours")), # hours post donor inoculation 
+         hpe = dpe*24, # convert dpe to hpe
+         exp_type = if_else(group == "donor", "inoc", "cont"), # exposed by inoculation or direct contact
+         fever = if_else(temp >= 104, "fever", "no_fever"), # temp >= 104 constitutes fever
+         censor_status = if_else(group == "Group 1" | animal == "BR23-24", 0, 1), # No obs symptoms (0) in these 
+  )
+
+```
+
+## Clinical Onset
+The *find_clinical_onset()* function identifies first occurrence of score > 0 then creates new "Event" column with 1 at this date, 0's before this date, and a value 3 after that date. 
+```{r}
+clin_start_df <- as.data.frame(
+  find_clinical_onset(antem_df)
+)
+```
+
+Quick stats to check data
+```{r}
+unique(clin_start_df$Event)
+
+check_stats <- clin_start_df %>%
+  filter(Event == 1 & censor_status == 1)
+
+dim(check_stats)
+range(check_stats$dpe)
+mean(check_stats$dpe)
+median(check_stats$dpe)
+```
+  
+## Remove Group 1
+Group 1 was not infected and has no expectation of developing disease.  Animals that were infected, verified by nasal, serum, or fever but never developed lesions are censored.  
+```{r}
+clin_start_df <- clin_start_df %>%
+ filter(group != "Group 1",
+         Event == 1 | censor_status == 0 & censor_k == 1)
+```
+
+check data
+```{r}
+clin_start_df %>%
+  filter(Event == 1) %>%
+  summarise(mean_dpe = mean(dpe),
+            median_dpe = median(dpe))
+```
+  
+## Scale Time
+Add an arbitrarily small value to eliminate zeros.  Really not need with his specific data set, by an important step.  
+```{r}
+clin_start_df$scaled_duration <- clin_start_df$dpe + 0.0001
+```
+  
+## Weighted Contacts
+Contact with groups by donors was sequential at 24hr intervals, shedding rates (nasal swabs) varied over this period. 
+```{r}
+shed_rates <- antem_df %>%
+  filter(group == "donor") %>%
+  group_by(dpi) %>%
+  summarise(tot_shed = sum(ifelse(nasal == 45, 0, nasal))) %>%
+  mutate(group = paste("Group", dpi, sep=" "))
+
+# match cumulative shed from donors based on time of contact
+clin_start_df$donor_shed <- with(shed_rates,
+                                 tot_shed[match(
+                                   clin_start_df$group,
+                                                 group)])
+
+# an integer index is needed for modeling purposes, group contacts are 1:1 correlated with time
+clin_start_df$shed_time <- as.integer(as.factor(clin_start_df$group))
+```
+
+## Response Variable
+Creating a survival object to ensure time and censored animals are correctly indicated.
+```{r}
+surv_obj <- inla.surv(clin_start_df$scaled_duration, clin_start_df$Event)
+```
+
+## Survival Model
+```{r}
+return_quants <- c(0.025, 0.05, 0.25, 0.5, 0.75, 0.95, 0.975)
+
+pc_prec_iid <- list(theta = list(prior="pc.prec", 
+                                 param=c(0.5, 0.001)))
+
+incubation_dur <- inla(surv_obj ~ 1 +
+                         f(shed_time, donor_shed,
+                           model = "rw1",
+                           constr=TRUE,
+                           hyper=pc_prec_iid),
+                        data = clin_start_df, 
+                        verbose=FALSE,
+                        quantiles = return_quants,
+                        family = "exponential.surv",
+                        control.fixed = list(prec = 1, prec.intercept  =0.0001),
+                        control.compute=list(dic = TRUE, cpo = FALSE, waic = TRUE))
+
+```
+
+## Sample Marginals
+Performing sampling on the model results
+```{r}
+incubation_samples <- compute_survival_marginals(incubation_dur, 14)
+```
+
+Check estimates at the 0.5 probability (median)  
+```{r}
+median_incubation <- find_closest_quant(incubation_samples, 0.5)
+median_incubation
+```
+
+## Survival Curve
+```{r fig.width=8, fig.height=6}
+plot_survival_marginals(incubation_samples, x_max = 14, xlabel = "Incubation Phase Duration")
+```
+
+save incubation samples
+```{r eval=FALSE}
+saveRDS(incubation_samples, here("assets/incubation_samples.rds"))
+saveRDS(median_incubation, here("assets/incubation_median.rds"))
+```
+

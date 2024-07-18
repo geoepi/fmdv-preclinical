@@ -1,0 +1,101 @@
+---
+title: "Subclinical Phase"
+description: "Calculate subclinical phase duration from incubation and latent phases from other analyses"
+format:
+  html: 
+    df-print: kable
+    code-fold: show
+    code-summary: "Hide code"
+    code-overflow: wrap
+    toc-title: Page Contents
+    toc: true
+    toc-depth: 2
+    toc-location: right
+    number-sections: false
+    html-math-method: katex
+    smooth-scroll: true
+editor: source
+editor_options: 
+  chunk_output_type: console
+---
+```{=html}
+<style type="text/css">
+
+body, td {
+   font-size: 13pt;
+}
+code.r{
+  font-size: 9pt;
+}
+pre {
+  font-size: 11pt
+}
+</style>
+```
+
+```{r, warning=FALSE, message=FALSE, echo=FALSE}
+library(tidyverse)
+options(dplyr.summarise.inform = FALSE)
+
+library(INLA)
+library(here)
+library(pals)
+
+## Custom Functions
+source(here("R/utilities.R"))
+source_dir(here("R"))
+
+## Read Data  
+antem_df <- read_csv(here("local/bov_antemortem_2024.csv"))
+
+# minimum date
+min_date <- min(antem_df$date)
+
+# add variables 
+antem_df <- antem_df %>%
+  mutate(hpdi = as.numeric(difftime(date, min_date, units = "hours")), # hours post donor inoculation 
+         hpe = dpe*24, # convert dpe to hpe
+         exp_type = if_else(group == "donor", "inoc", "cont"), # exposed by inoculation or direct contact
+         fever = if_else(temp >= 104, "fever", "no_fever"), # temp >= 104 constitutes fever
+         censor_status = if_else(group == "Group 1" | animal == "BR23-24", 0, 1), # No obs symptoms (0) in these 
+  )
+
+```
+
+## Calculate Subclinical
+```{r} 
+# from other analysis
+incubation_samples <- readRDS(here("assets/incubation_samples.rds"))
+latent_samples <- readRDS(here("assets/latent_samples.rds"))
+median_incubation <- readRDS(here("assets/incubation_median.rds"))
+median_latent <- readRDS(here("assets/latent_median.rds"))
+ 
+median_subclinical <- Map(function(x, y) x - y, median_incubation, median_latent)
+
+medians_df <- as.data.frame(
+  rbind(
+    Incubation = as.data.frame(median_incubation),
+    Subclinical = as.data.frame(median_subclinical),
+    Latent = as.data.frame(median_latent)
+  )
+)
+
+medians_df
+
+medians_df$Name <- rownames(medians_df)
+medians_df$Name <- ordered(factor(medians_df$Name), c("Latent", "Subclinical", "Incubation"))
+```
+
+Plot median phases  
+```{r fig.width=8, fig.height=6}
+plot_median_phases(medians_df)
+```
+
+Plot subclinical curve.  
+```{r fig.width=8, fig.height=6}
+plot_compare_marginals(incubation_samples, latent_samples)
+```
+
+
+
+
