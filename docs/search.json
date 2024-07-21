@@ -184,7 +184,7 @@
   {
     "objectID": "serial_interval.html#clinical-onset",
     "href": "serial_interval.html#clinical-onset",
-    "title": "Serial Interval",
+    "title": "Fractional Subclinical Transmsisson",
     "section": "Clinical Onset",
     "text": "Clinical Onset\nThe find_clinical_onset() function identifies first occurrence of score > 0 then creates new “Event” column with 1 at this date, 0’s before this date, and a value 3 after that date.\n\n\nHide code\nclin_start_df <- as.data.frame(\n  find_clinical_onset(antem_df)\n)\n\nonsets_df <- clin_start_df %>% \n  filter(Event == 1)"
   },
@@ -205,21 +205,21 @@
   {
     "objectID": "serial_interval.html#empiracal-incubation-period",
     "href": "serial_interval.html#empiracal-incubation-period",
-    "title": "Serial Interval",
+    "title": "Fractional Subclinical Transmsisson",
     "section": "Empiracal Incubation Period",
     "text": "Empiracal Incubation Period\n\n\nHide code\nempirical_incub_periods <- clin_start_df %>%\n  group_by(animal, group) %>%\n  summarise(\n    incubation_period = if (nrow(filter(pick(everything()), Event == 1)) == 0) {\n      NA\n    } else {\n      as.numeric(\n        filter(pick(everything()), Event == 1)$date - filter(pick(everything()), dpe == 0)$date\n      )\n    }\n  ) %>%\n  ungroup()\n\ngroup_incu <- as.data.frame(\n  empirical_incub_periods %>%\n  group_by(group) %>%\n  summarise(mean_incu = mean(incubation_period, na.rm=T),\n            sd_incu = sd(incubation_period, na.rm=T)) %>%\n    filter(group %in% c(\"Group 2\", \"Group 3\", \"Group 4\"))\n  ) \n\nemp_incub <- empirical_incub_periods %>%\n  filter(is.na(incubation_period) == FALSE)"
   },
   {
     "objectID": "serial_interval.html#empirical-serial-interval",
     "href": "serial_interval.html#empirical-serial-interval",
-    "title": "Serial Interval",
+    "title": "Fractional Subclinical Transmsisson",
     "section": "Empirical Serial Interval",
     "text": "Empirical Serial Interval\n\n\nHide code\ndonors <- onsets_df[onsets_df$group == \"donor\", ]\nsecondary <- onsets_df[onsets_df$group != \"donor\", ]\n\nserial_intervals <- list()\n# loop over each donor\nfor (i in 1:nrow(donors)) {\n  donor_date <- donors$date[i]\n  donor_animal <- donors$animal[i]\n  \n  # serial intervals\n  intervals <- secondary$date - donor_date\n  \n  serial_intervals[[donor_animal]] <- data.frame(\n    donor = donor_animal,\n    secondary = secondary$animal,\n    group = secondary$group,\n    serial_interval = as.numeric(intervals)\n  )\n}\n\nserial_intervals_df <- do.call(rbind, serial_intervals)\n\nrange(serial_intervals_df$serial_interval)\n\n\n[1] 1 3\n\n\nHide code\ngroup_si <- as.data.frame(\n  serial_intervals_df %>%\n  group_by(group) %>%\n  summarize(si_mean = mean(serial_interval),\n            si_sd = sd(serial_interval)) %>%\n    filter(group %in% c(\"Group 2\", \"Group 3\", \"Group 4\"))\n)\n\ngroup_means <- left_join(group_incu, group_si, by = \"group\")"
   },
   {
     "objectID": "serial_interval.html#bootstrap-preclinical-fraction",
     "href": "serial_interval.html#bootstrap-preclinical-fraction",
-    "title": "Serial Interval",
+    "title": "Fractional Subclinical Transmsisson",
     "section": "Bootstrap Preclinical Fraction",
     "text": "Bootstrap Preclinical Fraction\n\n\nHide code\nboot_out <- bootstrap_preclinical_frac(group_means)\n\nboot_out$plot"
   },

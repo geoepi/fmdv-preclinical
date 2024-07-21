@@ -1,5 +1,5 @@
 ---
-title: "Serial Interval"
+title: "Fractional Subclinical Transmsisson"
 description: "Calculate serial intervals and estimate fractional preclinical transmsission"
 format:
   html: 
