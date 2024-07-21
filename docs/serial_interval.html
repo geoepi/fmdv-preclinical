@@ -6,9 +6,9 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
-<meta name="description" content="Load and format experimental data for analysis.">
+<meta name="description" content="Calculate serial intervals and estimate fractional preclinical transmsission">
 
-<title>FMDV Preclinical - Preprocessing</title>
+<title>FMDV Preclinical - Serial Interval</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -148,7 +148,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
  <span class="menu-text">Overview</span></a>
   </li>  
   <li class="nav-item">
-    <a class="nav-link active" href="./preprocess.html" aria-current="page">
+    <a class="nav-link" href="./preprocess.html">
  <span class="menu-text">Preprocessing</span></a>
   </li>  
   <li class="nav-item">
@@ -164,7 +164,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
  <span class="menu-text">Subclinical</span></a>
   </li>  
   <li class="nav-item">
-    <a class="nav-link" href="./serial_interval.html">
+    <a class="nav-link active" href="./serial_interval.html" aria-current="page">
  <span class="menu-text">Fractional</span></a>
   </li>  
   <li class="nav-item">
@@ -197,10 +197,10 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
     <h2 id="toc-title">Page Contents</h2>
    
   <ul class="collapse">
-  <li><a href="#libraries" id="toc-libraries" class="nav-link active" data-scroll-target="#libraries">Libraries</a></li>
-  <li><a href="#custom-functions" id="toc-custom-functions" class="nav-link" data-scroll-target="#custom-functions">Custom Functions</a></li>
-  <li><a href="#read-data" id="toc-read-data" class="nav-link" data-scroll-target="#read-data">Read Data</a></li>
-  <li><a href="#plots-to-check-data" id="toc-plots-to-check-data" class="nav-link" data-scroll-target="#plots-to-check-data">Plots to Check Data</a></li>
+  <li><a href="#clinical-onset" id="toc-clinical-onset" class="nav-link active" data-scroll-target="#clinical-onset">Clinical Onset</a></li>
+  <li><a href="#empiracal-incubation-period" id="toc-empiracal-incubation-period" class="nav-link" data-scroll-target="#empiracal-incubation-period">Empiracal Incubation Period</a></li>
+  <li><a href="#empirical-serial-interval" id="toc-empirical-serial-interval" class="nav-link" data-scroll-target="#empirical-serial-interval">Empirical Serial Interval</a></li>
+  <li><a href="#bootstrap-preclinical-fraction" id="toc-bootstrap-preclinical-fraction" class="nav-link" data-scroll-target="#bootstrap-preclinical-fraction">Bootstrap Preclinical Fraction</a></li>
   </ul>
 </nav>
     </div>
@@ -209,12 +209,12 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">Preprocessing</h1>
+<h1 class="title">Serial Interval</h1>
 </div>
 
 <div>
   <div class="description">
-    Load and format experimental data for analysis.
+    Calculate serial intervals and estimate fractional preclinical transmsission
   </div>
 </div>
 
@@ -241,88 +241,116 @@ pre {
   font-size: 11pt
 }
 </style>
-<section id="libraries" class="level2">
-<h2 class="anchored" data-anchor-id="libraries">Libraries</h2>
+<div class="cell">
+
+</div>
+<section id="clinical-onset" class="level2">
+<h2 class="anchored" data-anchor-id="clinical-onset">Clinical Onset</h2>
+<p>The <em>find_clinical_onset()</em> function identifies first occurrence of score &gt; 0 then creates new “Event” column with 1 at this date, 0’s before this date, and a value 3 after that date.</p>
 <div class="cell">
 <details open="">
 <summary>Hide code</summary>
-<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(INLA)</span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(here)</span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(pals)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>clin_start_df <span class="ot">&lt;-</span> <span class="fu">as.data.frame</span>(</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">find_clinical_onset</span>(antem_df)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>onsets_df <span class="ot">&lt;-</span> clin_start_df <span class="sc">%&gt;%</span> </span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(Event <span class="sc">==</span> <span class="dv">1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 </section>
-<section id="custom-functions" class="level2">
-<h2 class="anchored" data-anchor-id="custom-functions">Custom Functions</h2>
+<section id="empiracal-incubation-period" class="level2">
+<h2 class="anchored" data-anchor-id="empiracal-incubation-period">Empiracal Incubation Period</h2>
 <div class="cell">
 <details open="">
 <summary>Hide code</summary>
-<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">source</span>(<span class="fu">here</span>(<span class="st">"R/utilities.R"</span>))</span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="fu">source_dir</span>(<span class="fu">here</span>(<span class="st">"R"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>empirical_incub_periods <span class="ot">&lt;-</span> clin_start_df <span class="sc">%&gt;%</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(animal, group) <span class="sc">%&gt;%</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">incubation_period =</span> <span class="cf">if</span> (<span class="fu">nrow</span>(<span class="fu">filter</span>(<span class="fu">pick</span>(<span class="fu">everything</span>()), Event <span class="sc">==</span> <span class="dv">1</span>)) <span class="sc">==</span> <span class="dv">0</span>) {</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>      <span class="cn">NA</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    } <span class="cf">else</span> {</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>      <span class="fu">as.numeric</span>(</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>        <span class="fu">filter</span>(<span class="fu">pick</span>(<span class="fu">everything</span>()), Event <span class="sc">==</span> <span class="dv">1</span>)<span class="sc">$</span>date <span class="sc">-</span> <span class="fu">filter</span>(<span class="fu">pick</span>(<span class="fu">everything</span>()), dpe <span class="sc">==</span> <span class="dv">0</span>)<span class="sc">$</span>date</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>      )</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ungroup</span>()</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>group_incu <span class="ot">&lt;-</span> <span class="fu">as.data.frame</span>(</span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>  empirical_incub_periods <span class="sc">%&gt;%</span></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(group) <span class="sc">%&gt;%</span></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">mean_incu =</span> <span class="fu">mean</span>(incubation_period, <span class="at">na.rm=</span>T),</span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>            <span class="at">sd_incu =</span> <span class="fu">sd</span>(incubation_period, <span class="at">na.rm=</span>T)) <span class="sc">%&gt;%</span></span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(group <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Group 2"</span>, <span class="st">"Group 3"</span>, <span class="st">"Group 4"</span>))</span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>  ) </span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>emp_incub <span class="ot">&lt;-</span> empirical_incub_periods <span class="sc">%&gt;%</span></span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="fu">is.na</span>(incubation_period) <span class="sc">==</span> <span class="cn">FALSE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 </section>
-<section id="read-data" class="level2">
-<h2 class="anchored" data-anchor-id="read-data">Read Data</h2>
+<section id="empirical-serial-interval" class="level2">
+<h2 class="anchored" data-anchor-id="empirical-serial-interval">Empirical Serial Interval</h2>
 <div class="cell">
 <details open="">
 <summary>Hide code</summary>
-<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>antem_df <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="fu">here</span>(<span class="st">"local/bov_antemortem_2024.csv"</span>))</span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="co"># minimum date</span></span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>min_date <span class="ot">&lt;-</span> <span class="fu">min</span>(antem_df<span class="sc">$</span>date)</span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>min_date <span class="co"># date of donor inoculation</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>donors <span class="ot">&lt;-</span> onsets_df[onsets_df<span class="sc">$</span>group <span class="sc">==</span> <span class="st">"donor"</span>, ]</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>secondary <span class="ot">&lt;-</span> onsets_df[onsets_df<span class="sc">$</span>group <span class="sc">!=</span> <span class="st">"donor"</span>, ]</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>serial_intervals <span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="co"># loop over each donor</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">nrow</span>(donors)) {</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>  donor_date <span class="ot">&lt;-</span> donors<span class="sc">$</span>date[i]</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>  donor_animal <span class="ot">&lt;-</span> donors<span class="sc">$</span>animal[i]</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>  <span class="co"># serial intervals</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>  intervals <span class="ot">&lt;-</span> secondary<span class="sc">$</span>date <span class="sc">-</span> donor_date</span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>  serial_intervals[[donor_animal]] <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">donor =</span> donor_animal,</span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">secondary =</span> secondary<span class="sc">$</span>animal,</span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">group =</span> secondary<span class="sc">$</span>group,</span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">serial_interval =</span> <span class="fu">as.numeric</span>(intervals)</span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>serial_intervals_df <span class="ot">&lt;-</span> <span class="fu">do.call</span>(rbind, serial_intervals)</span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a><span class="fu">range</span>(serial_intervals_df<span class="sc">$</span>serial_interval)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] "2023-06-26"</code></pre>
+<pre><code>[1] 1 3</code></pre>
 </div>
 <details open="">
 <summary>Hide code</summary>
-<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># add variables </span></span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>antem_df <span class="ot">&lt;-</span> antem_df <span class="sc">%&gt;%</span></span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">hpdi =</span> <span class="fu">as.numeric</span>(<span class="fu">difftime</span>(date, min_date, <span class="at">units =</span> <span class="st">"hours"</span>)), <span class="co"># hours post donor inoculation </span></span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>         <span class="at">hpe =</span> dpe<span class="sc">*</span><span class="dv">24</span>, <span class="co"># convert dpe to hpe</span></span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>         <span class="at">exp_type =</span> <span class="fu">if_else</span>(group <span class="sc">==</span> <span class="st">"donor"</span>, <span class="st">"inoc"</span>, <span class="st">"cont"</span>), <span class="co"># exposed by inoculation or direct contact</span></span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>         <span class="at">fever =</span> <span class="fu">if_else</span>(temp <span class="sc">&gt;=</span> <span class="dv">104</span>, <span class="st">"fever"</span>, <span class="st">"no_fever"</span>), <span class="co"># temp &gt;= 104 constitutes fever</span></span>
-<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>         <span class="at">censor_status =</span> <span class="fu">if_else</span>(group <span class="sc">==</span> <span class="st">"Group 1"</span> <span class="sc">|</span> animal <span class="sc">==</span> <span class="st">"BR23-24"</span>, <span class="dv">0</span>, <span class="dv">1</span>), <span class="co"># No obs symptoms (0) in these </span></span>
-<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a><span class="fu">dim</span>(antem_df)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>group_si <span class="ot">&lt;-</span> <span class="fu">as.data.frame</span>(</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  serial_intervals_df <span class="sc">%&gt;%</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(group) <span class="sc">%&gt;%</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="at">si_mean =</span> <span class="fu">mean</span>(serial_interval),</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>            <span class="at">si_sd =</span> <span class="fu">sd</span>(serial_interval)) <span class="sc">%&gt;%</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(group <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Group 2"</span>, <span class="st">"Group 3"</span>, <span class="st">"Group 4"</span>))</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>group_means <span class="ot">&lt;-</span> <span class="fu">left_join</span>(group_incu, group_si, <span class="at">by =</span> <span class="st">"group"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] 168  14</code></pre>
-</div>
 </div>
 </section>
-<section id="plots-to-check-data" class="level2">
-<h2 class="anchored" data-anchor-id="plots-to-check-data">Plots to Check Data</h2>
-<section id="donors" class="level3">
-<h3 class="anchored" data-anchor-id="donors">Donors</h3>
+<section id="bootstrap-preclinical-fraction" class="level2">
+<h2 class="anchored" data-anchor-id="bootstrap-preclinical-fraction">Bootstrap Preclinical Fraction</h2>
 <div class="cell">
 <details open="">
 <summary>Hide code</summary>
-<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_donors</span>(antem_df)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>boot_out <span class="ot">&lt;-</span> <span class="fu">bootstrap_preclinical_frac</span>(group_means)</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>boot_out<span class="sc">$</span>plot</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
-<p><img src="preprocess_files/figure-html/unnamed-chunk-4-1.png" class="img-fluid" width="768"></p>
-</div>
-</div>
-</section>
-<section id="contact-groups" class="level3">
-<h3 class="anchored" data-anchor-id="contact-groups">Contact Groups</h3>
-<div class="cell">
-<details open="">
-<summary>Hide code</summary>
-<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_contact_groups</span>(antem_df)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
-<div class="cell-output-display">
-<p><img src="preprocess_files/figure-html/unnamed-chunk-5-1.png" class="img-fluid" width="768"></p>
+<p><img src="serial_interval_files/figure-html/unnamed-chunk-5-1.png" class="img-fluid" width="768"></p>
 </div>
 </div>
 
 
-</section>
 </section>
 
 </main> <!-- /main -->

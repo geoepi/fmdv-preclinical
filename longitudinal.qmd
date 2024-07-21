@@ -1,6 +1,6 @@
 ---
 title: "Longitudinal Analysis"  
-description: "Mixed effect models for individual time-i observations"
+description: "Mixed effect models for individual, time-dependent observations"
 format:
   html: 
     df-print: kable

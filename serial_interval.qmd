@@ -1,0 +1,145 @@
+---
+title: "Serial Interval"
+description: "Calculate serial intervals and estimate fractional preclinical transmsission"
+format:
+  html: 
+    df-print: kable
+    code-fold: show
+    code-summary: "Hide code"
+    code-overflow: wrap
+    toc-title: Page Contents
+    toc: true
+    toc-depth: 2
+    toc-location: right
+    number-sections: false
+    html-math-method: katex
+    smooth-scroll: true
+editor: source
+editor_options: 
+  chunk_output_type: console
+---
+```{=html}
+<style type="text/css">
+
+body, td {
+   font-size: 13pt;
+}
+code.r{
+  font-size: 9pt;
+}
+pre {
+  font-size: 11pt
+}
+</style>
+```
+
+```{r, warning=FALSE, message=FALSE, echo=FALSE}
+library(tidyverse)
+options(dplyr.summarise.inform = FALSE)
+
+library(INLA)
+library(here)
+library(pals)
+
+## Custom Functions
+source(here("R/utilities.R"))
+source_dir(here("R"))
+
+## Read Data  
+antem_df <- read_csv(here("local/bov_antemortem_2024.csv"))
+
+# minimum date
+min_date <- min(antem_df$date)
+
+# add variables 
+antem_df <- antem_df %>%
+  mutate(hpdi = as.numeric(difftime(date, min_date, units = "hours")), # hours post donor inoculation 
+         hpe = dpe*24, # convert dpe to hpe
+         exp_type = if_else(group == "donor", "inoc", "cont"), # exposed by inoculation or direct contact
+         fever = if_else(temp >= 104, "fever", "no_fever"), # temp >= 104 constitutes fever
+         censor_status = if_else(group == "Group 1" | animal == "BR23-24", 0, 1), # No obs symptoms (0) in these 
+  )
+```
+
+## Clinical Onset
+The *find_clinical_onset()* function identifies first occurrence of score > 0 then creates new "Event" column with 1 at this date, 0's before this date, and a value 3 after that date. 
+```{r}
+clin_start_df <- as.data.frame(
+  find_clinical_onset(antem_df)
+)
+
+onsets_df <- clin_start_df %>% 
+  filter(Event == 1)
+```
+
+## Empiracal Incubation Period
+```{r}
+empirical_incub_periods <- clin_start_df %>%
+  group_by(animal, group) %>%
+  summarise(
+    incubation_period = if (nrow(filter(pick(everything()), Event == 1)) == 0) {
+      NA
+    } else {
+      as.numeric(
+        filter(pick(everything()), Event == 1)$date - filter(pick(everything()), dpe == 0)$date
+      )
+    }
+  ) %>%
+  ungroup()
+
+group_incu <- as.data.frame(
+  empirical_incub_periods %>%
+  group_by(group) %>%
+  summarise(mean_incu = mean(incubation_period, na.rm=T),
+            sd_incu = sd(incubation_period, na.rm=T)) %>%
+    filter(group %in% c("Group 2", "Group 3", "Group 4"))
+  ) 
+
+emp_incub <- empirical_incub_periods %>%
+  filter(is.na(incubation_period) == FALSE)
+```
+
+## Empirical Serial Interval 
+```{r} 
+donors <- onsets_df[onsets_df$group == "donor", ]
+secondary <- onsets_df[onsets_df$group != "donor", ]
+
+serial_intervals <- list()
+# loop over each donor
+for (i in 1:nrow(donors)) {
+  donor_date <- donors$date[i]
+  donor_animal <- donors$animal[i]
+  
+  # serial intervals
+  intervals <- secondary$date - donor_date
+  
+  serial_intervals[[donor_animal]] <- data.frame(
+    donor = donor_animal,
+    secondary = secondary$animal,
+    group = secondary$group,
+    serial_interval = as.numeric(intervals)
+  )
+}
+
+serial_intervals_df <- do.call(rbind, serial_intervals)
+
+range(serial_intervals_df$serial_interval)
+
+group_si <- as.data.frame(
+  serial_intervals_df %>%
+  group_by(group) %>%
+  summarize(si_mean = mean(serial_interval),
+            si_sd = sd(serial_interval)) %>%
+    filter(group %in% c("Group 2", "Group 3", "Group 4"))
+)
+
+group_means <- left_join(group_incu, group_si, by = "group")
+```
+  
+## Bootstrap Preclinical Fraction    
+```{r fig.width=8, fig.height=6}
+boot_out <- bootstrap_preclinical_frac(group_means)
+
+boot_out$plot
+```
+

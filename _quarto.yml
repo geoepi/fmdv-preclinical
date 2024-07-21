@@ -6,14 +6,18 @@ website:
   title: "FMDV Preclinical"
   navbar:
     left:
+      - href: index.qmd
+        text: Overview
       - href: preprocess.qmd
         text: Preprocessing 
       - href: incubation.qmd
-        text: Incubation Phase
+        text: Incubation
       - href: latent.qmd
-        text: Latent Phase
+        text: Latent
       - href: subclinical.qmd
-        text: Subclinical Phase
+        text: Subclinical
+      - href: serial_interval.qmd
+        text: Fractional
       - href: longitudinal.qmd
         text: Longitudinal
     right:

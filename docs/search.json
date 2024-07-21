@@ -39,7 +39,7 @@
     "href": "incubation.html#survival-model",
     "title": "Incubation Phase",
     "section": "Survival Model",
-    "text": "Survival Model\n\n\nHide code\nreturn_quants <- c(0.025, 0.05, 0.25, 0.5, 0.75, 0.95, 0.975)\n\npc_prec_iid <- list(theta = list(prior=\"pc.prec\", \n                                 param=c(0.5, 0.001)))\n\nincubation_dur <- inla(surv_obj ~ 1 +\n                         f(shed_time, donor_shed,\n                           model = \"rw1\",\n                           constr=TRUE,\n                           hyper=pc_prec_iid),\n                        data = clin_start_df, \n                        verbose=FALSE,\n                        quantiles = return_quants,\n                        family = \"exponential.surv\",\n                        control.fixed = list(prec = 1, prec.intercept  =0.0001),\n                        control.compute=list(dic = TRUE, cpo = FALSE, waic = TRUE))"
+    "text": "Survival Model\n\nClinicalSheddingSerumTemperature\n\n\n\n\nHide code\nreturn_quants <- c(0.025, 0.05, 0.25, 0.5, 0.75, 0.95, 0.975)\n\npc_prec_iid <- list(theta = list(prior=\"pc.prec\", \n                                 param=c(0.5, 0.001)))\n\nincubation_dur <- inla(surv_obj ~ 1 +\n                         f(shed_time, donor_shed,\n                           model = \"rw1\",\n                           constr=TRUE,\n                           hyper=pc_prec_iid),\n                        data = clin_start_df, \n                        verbose=FALSE,\n                        quantiles = return_quants,\n                        family = \"exponential.surv\",\n                        control.fixed = list(prec = 1, prec.intercept  =0.0001),\n                        control.compute=list(dic = TRUE, cpo = FALSE, waic = TRUE))\n\n\n\n\n\n\nHide code\n## Add model based on virus shedding - nasal swabs\n\n\n\n\n\n\nHide code\n## Add model based on serum \n\n\n\n\n\n\nHide code\n## Add model based on fever onset"
   },
   {
     "objectID": "incubation.html#sample-marginals",
@@ -180,5 +180,61 @@
     "title": "Subclinical Phase",
     "section": "Calculate Subclinical",
     "text": "Calculate Subclinical\n\n\nHide code\n# from other analysis\nincubation_samples <- readRDS(here(\"assets/incubation_samples.rds\"))\nlatent_samples <- readRDS(here(\"assets/latent_samples.rds\"))\nmedian_incubation <- readRDS(here(\"assets/incubation_median.rds\"))\nmedian_latent <- readRDS(here(\"assets/latent_median.rds\"))\n \nmedian_subclinical <- Map(function(x, y) x - y, median_incubation, median_latent)\n\nmedians_df <- as.data.frame(\n  rbind(\n    Incubation = as.data.frame(median_incubation),\n    Subclinical = as.data.frame(median_subclinical),\n    Latent = as.data.frame(median_latent)\n  )\n)\n\nmedians_df\n\n\n\n\n\n\n\nquant0.025\nquant0.25\nquant0.5\nquant0.75\nquant0.975\n\n\n\n\nIncubation\n1.501\n2.301\n2.901\n3.601\n5.901\n\n\nSubclinical\n1.000\n1.400\n1.700\n2.100\n3.400\n\n\nLatent\n0.501\n0.901\n1.201\n1.501\n2.501\n\n\n\n\n\n\nHide code\nmedians_df$Name <- rownames(medians_df)\nmedians_df$Name <- ordered(factor(medians_df$Name), c(\"Latent\", \"Subclinical\", \"Incubation\"))\n\n\nPlot median phases\n\n\nHide code\nplot_median_phases(medians_df)\n\n\n\n\n\nPlot subclinical curve.\n\n\nHide code\nplot_compare_marginals(incubation_samples, latent_samples)"
+  },
+  {
+    "objectID": "serial_interval.html#clinical-onset",
+    "href": "serial_interval.html#clinical-onset",
+    "title": "Serial Interval",
+    "section": "Clinical Onset",
+    "text": "Clinical Onset\nThe find_clinical_onset() function identifies first occurrence of score > 0 then creates new “Event” column with 1 at this date, 0’s before this date, and a value 3 after that date.\n\n\nHide code\nclin_start_df <- as.data.frame(\n  find_clinical_onset(antem_df)\n)\n\nonsets_df <- clin_start_df %>% \n  filter(Event == 1)"
+  },
+  {
+    "objectID": "serial_interval.html#descriptive",
+    "href": "serial_interval.html#descriptive",
+    "title": "Serial Interval",
+    "section": "Descriptive",
+    "text": "Descriptive\n\n\nHide code\nemp_incub_periods_df <- clin_start_df %>%\n  group_by(animal, group) %>%\n  summarise(\n    incubation_period = if (nrow(filter(cur_data(), Event == 1)) == 0) {\n      NA\n    } else {\n      as.numeric(\n        filter(cur_data(), Event == 1)$date - filter(cur_data(), dpe == 0)$date\n      )\n    }\n  ) %>%\n  ungroup()\n\n\nWarning: There was 1 warning in `summarise()`.\nℹ In argument: `incubation_period = if (...) NULL`.\nℹ In group 1: `animal = \"BR23-17\"` and `group = \"donor\"`.\nCaused by warning:\n! `cur_data()` was deprecated in dplyr 1.1.0.\nℹ Please use `pick()` instead."
+  },
+  {
+    "objectID": "serial_interval.html#empiracal-si",
+    "href": "serial_interval.html#empiracal-si",
+    "title": "Serial Interval",
+    "section": "Empiracal SI",
+    "text": "Empiracal SI\n\n\nHide code\ndonors <- onsets_df[onsets_df$group == \"donor\", ]\nsecondary <- onsets_df[onsets_df$group != \"donor\", ]\n\nserial_intervals <- list()\n\n# Loop over each donor\nfor (i in 1:nrow(donors)) {\n  donor_date <- donors$date[i]\n  donor_animal <- donors$animal[i]\n  \n  # Calculate the serial intervals for each secondary case\n  intervals <- secondary$date - donor_date\n  \n  # Store the results in the list, including the \"group\" column\n  serial_intervals[[donor_animal]] <- data.frame(\n    donor = donor_animal,\n    secondary_animal = secondary$animal,\n    group = secondary$group,\n    serial_interval = as.numeric(intervals)\n  )\n}\n\n# Combine the results into a single dataframe\nserial_intervals_df <- do.call(rbind, serial_intervals)\n\n\nrange(serial_intervals_df$serial_interval)\n\n\n[1] 1 3\n\n\nHide code\nserial_intervals_df %>%\n  group_by(group) %>%\n  summarize(group_mean = mean(serial_interval))\n\n\n\n\n\n\ngroup\ngroup_mean\n\n\n\n\nGroup 2\n2.666667\n\n\nGroup 3\n1.000000\n\n\nGroup 4\n2.500000\n\n\n\n\n\n\nHide code\nserial_intervals_df %>%\n  group_by(donor) %>%\n  summarize(donor_mean = mean(serial_interval))\n\n\n\n\n\n\ndonor\ndonor_mean\n\n\n\n\nBR23-17\n2\n\n\nBR23-18\n2\n\n\n\n\n\n\n\n\nHide code\nlibrary(fitdistrplus)\n\n\nLoading required package: MASS\n\n\n\nAttaching package: 'MASS'\n\n\nThe following object is masked from 'package:dplyr':\n\n    select\n\n\nLoading required package: survival\n\n\nHide code\n# Fit a gamma distribution to the serial interval data\nfit <- fitdist(serial_intervals_df$serial_interval, \"gamma\")\n\n# Display the fit summary\nsummary(fit)\n\n\nFitting of the distribution ' gamma ' by maximum likelihood \nParameters : \n      estimate Std. Error\nshape 4.939817  1.4419287\nrate  2.469819  0.7588687\nLoglikelihood:  -27.33323   AIC:  58.66645   BIC:  60.84853 \nCorrelation matrix:\n          shape      rate\nshape 1.0000000 0.9500167\nrate  0.9500167 1.0000000\n\n\nHide code\n# Plot the fit\nplot(fit)\n\n\n\n\n\n\n\nHide code\nggplot(serial_intervals_df, aes(x = serial_interval)) +\n  geom_histogram(aes(y = ..density..), binwidth = 1, fill = \"blue\", color = \"black\", alpha = 0.7) +\n  geom_density(color = \"red\", size = 1) +\n  labs(title = \"Probability Distribution of Serial Intervals\",\n       x = \"Serial Interval (days)\",\n       y = \"Probability Density\") +\n  theme_minimal()\n\n\nWarning: Using `size` aesthetic for lines was deprecated in ggplot2 3.4.0.\nℹ Please use `linewidth` instead.\n\n\nWarning: The dot-dot notation (`..density..`) was deprecated in ggplot2 3.4.0.\nℹ Please use `after_stat(density)` instead."
+  },
+  {
+    "objectID": "serial_interval.html#empiracal-incubation-period",
+    "href": "serial_interval.html#empiracal-incubation-period",
+    "title": "Serial Interval",
+    "section": "Empiracal Incubation Period",
+    "text": "Empiracal Incubation Period\n\n\nHide code\nempirical_incub_periods <- clin_start_df %>%\n  group_by(animal, group) %>%\n  summarise(\n    incubation_period = if (nrow(filter(pick(everything()), Event == 1)) == 0) {\n      NA\n    } else {\n      as.numeric(\n        filter(pick(everything()), Event == 1)$date - filter(pick(everything()), dpe == 0)$date\n      )\n    }\n  ) %>%\n  ungroup()\n\ngroup_incu <- as.data.frame(\n  empirical_incub_periods %>%\n  group_by(group) %>%\n  summarise(mean_incu = mean(incubation_period, na.rm=T),\n            sd_incu = sd(incubation_period, na.rm=T)) %>%\n    filter(group %in% c(\"Group 2\", \"Group 3\", \"Group 4\"))\n  ) \n\nemp_incub <- empirical_incub_periods %>%\n  filter(is.na(incubation_period) == FALSE)"
+  },
+  {
+    "objectID": "serial_interval.html#empirical-serial-interval",
+    "href": "serial_interval.html#empirical-serial-interval",
+    "title": "Serial Interval",
+    "section": "Empirical Serial Interval",
+    "text": "Empirical Serial Interval\n\n\nHide code\ndonors <- onsets_df[onsets_df$group == \"donor\", ]\nsecondary <- onsets_df[onsets_df$group != \"donor\", ]\n\nserial_intervals <- list()\n# loop over each donor\nfor (i in 1:nrow(donors)) {\n  donor_date <- donors$date[i]\n  donor_animal <- donors$animal[i]\n  \n  # serial intervals\n  intervals <- secondary$date - donor_date\n  \n  serial_intervals[[donor_animal]] <- data.frame(\n    donor = donor_animal,\n    secondary = secondary$animal,\n    group = secondary$group,\n    serial_interval = as.numeric(intervals)\n  )\n}\n\nserial_intervals_df <- do.call(rbind, serial_intervals)\n\nrange(serial_intervals_df$serial_interval)\n\n\n[1] 1 3\n\n\nHide code\ngroup_si <- as.data.frame(\n  serial_intervals_df %>%\n  group_by(group) %>%\n  summarize(si_mean = mean(serial_interval),\n            si_sd = sd(serial_interval)) %>%\n    filter(group %in% c(\"Group 2\", \"Group 3\", \"Group 4\"))\n)\n\ngroup_means <- left_join(group_incu, group_si, by = \"group\")"
+  },
+  {
+    "objectID": "serial_interval.html#bootstrap-preclinical-fraction",
+    "href": "serial_interval.html#bootstrap-preclinical-fraction",
+    "title": "Serial Interval",
+    "section": "Bootstrap Preclinical Fraction",
+    "text": "Bootstrap Preclinical Fraction\n\n\nHide code\nboot_out <- bootstrap_preclinical_frac(group_means)\n\nboot_out$plot"
+  },
+  {
+    "objectID": "overview.html",
+    "href": "overview.html",
+    "title": "Overview",
+    "section": "",
+    "text": "Under Active Development\n\n\n\nThis site includes exploratory analyses, has not been verified, and is subject to change."
+  },
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "Overview",
+    "section": "",
+    "text": "Under Active Development\n\n\n\nThis site includes exploratory analyses, has not been verified, and is subject to change."
   }
 ]

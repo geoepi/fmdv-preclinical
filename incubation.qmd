@@ -132,6 +132,10 @@ surv_obj <- inla.surv(clin_start_df$scaled_duration, clin_start_df$Event)
 ```
 
 ## Survival Model
+
+::: panel-tabset
+
+## Clinical
 ```{r}
 return_quants <- c(0.025, 0.05, 0.25, 0.5, 0.75, 0.95, 0.975)
 
@@ -152,6 +156,27 @@ incubation_dur <- inla(surv_obj ~ 1 +
 
 ```
 
+## Shedding
+
+```{r}
+
+## Add model based on virus shedding - nasal swabs
+```
+
+## Serum
+
+```{r}
+
+## Add model based on serum 
+```
+
+## Temperature
+
+```{r}
+
+## Add model based on fever onset
+```
+:::
 ## Sample Marginals
 Performing sampling on the model results
 ```{r}
