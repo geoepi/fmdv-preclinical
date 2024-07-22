@@ -201,6 +201,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
   <li><a href="#custom-functions" id="toc-custom-functions" class="nav-link" data-scroll-target="#custom-functions">Custom Functions</a></li>
   <li><a href="#read-data" id="toc-read-data" class="nav-link" data-scroll-target="#read-data">Read Data</a></li>
   <li><a href="#plots-to-check-data" id="toc-plots-to-check-data" class="nav-link" data-scroll-target="#plots-to-check-data">Plots to Check Data</a></li>
+  <li><a href="#anova" id="toc-anova" class="nav-link" data-scroll-target="#anova">ANOVA</a></li>
   </ul>
 </nav>
     </div>
@@ -320,9 +321,121 @@ pre {
 <p><img src="preprocess_files/figure-html/unnamed-chunk-5-1.png" class="img-fluid" width="768"></p>
 </div>
 </div>
-
-
 </section>
+</section>
+<section id="anova" class="level2">
+<h2 class="anchored" data-anchor-id="anova">ANOVA</h2>
+<p>To evaluate the differences in nasal, serum, and lesion score among groups and over time, repeated measures ANOVAs were applied using the <em>ezANOVA()</em> function from the <strong>ez</strong> R-package. The analyses included within-subjects (days post-exposure, dpe) and between-subjects (group) factors, with nasal, serum, and lesion scores as the dependent variables. Mauchly’s test was conducted to test the assumption of sphericity. Where violations were found, Greenhouse-Geisser and Huynh-Feldt corrections were applied.</p>
+<p>The repeated measures ANOVA results for nasal, serum, and lesion scores were significant. For nasal virus quantity, there were significant main effects of group (F(2, 9) = 9.22, p = 0.0066) and days post-exposure (dpe) (F(6, 54) = 33.99, p &lt; 0.0001), as well as a significant interaction between group and dpe (F(12, 54) = 5.53, p &lt; 0.0001), suggesting that nasal virus quantity varied significantly across groups and time, with different temporal patterns among groups. For serum virus quantity, no significant main effect of group was found (F(2, 9) = 2.79, p = 0.114), but there were significant effects of dpe (F(6, 54) = 25.18, p &lt; 0.0001) and the group by dpe interaction (F(12, 54) = 7.95, p &lt; 0.0001), indicating significant changes over time and different temporal patterns among groups. Lesion scores showed significant main effects of group (F(2, 9) = 5.86, p = 0.023) and dpe (F(6, 54) = 45.87, p &lt; 0.0001), and a significant interaction between group and dpe (F(12, 54) = 3.04, p = 0.0025), indicating significant differences in lesion severity across groups and over time, with varying temporal patterns among the groups.</p>
+<p><strong>Prepare Data</strong></p>
+<div class="cell">
+<details open="">
+<summary>Hide code</summary>
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>contact_groups <span class="ot">&lt;-</span> antem_df <span class="sc">%&gt;%</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(group <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Group 2"</span>, <span class="st">"Group 3"</span>, <span class="st">"Group 4"</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(animal, group, nasal, serum, dpe, score) <span class="sc">%&gt;%</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">score =</span> <span class="fu">replace_na</span>(score, <span class="dv">0</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">drop_na</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">score =</span> <span class="fu">replace_na</span>(score, <span class="dv">0</span>),          </span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">nasal =</span> <span class="fu">replace</span>(nasal, nasal <span class="sc">==</span> <span class="dv">45</span>, <span class="dv">0</span>), </span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">serum =</span> <span class="fu">replace</span>(serum, serum <span class="sc">==</span> <span class="dv">45</span>, <span class="dv">0</span>),</span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">dpe =</span> <span class="fu">as.factor</span>(dpe),                   </span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">animal =</span> <span class="fu">as.factor</span>(animal),            </span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">group =</span> <span class="fu">as.factor</span>(group)                </span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">as.data.frame</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+<div class="panel-tabset">
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-1-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-1" role="tab" aria-controls="tabset-1-1" aria-selected="true">Nasal</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-2" role="tab" aria-controls="tabset-1-2" aria-selected="false">Serum</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-3" role="tab" aria-controls="tabset-1-3" aria-selected="false">Score</a></li></ul>
+<div class="tab-content">
+<div id="tabset-1-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-1-1-tab">
+<p>Results indicate that nasal virus quantity differed significantly between the groups and across the days post-exposure, with an interaction effect suggesting that the temporal pattern of virus quantity varied among the groups.</p>
+<div class="cell">
+<details open="">
+<summary>Hide code</summary>
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>nasal_anova <span class="ot">&lt;-</span> ez<span class="sc">::</span><span class="fu">ezANOVA</span>(<span class="at">data =</span> contact_groups, <span class="at">dv =</span> .(nasal), <span class="at">wid =</span> .(animal), <span class="at">within =</span> .(dpe), <span class="at">between =</span> .(group))</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>nasal_anova</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>$ANOVA
+     Effect DFn DFd         F            p p&lt;.05       ges
+2     group   2   9  9.223642 6.619789e-03     * 0.2693092
+3       dpe   6  54 33.985994 1.195097e-16     * 0.7559307
+4 group:dpe  12  54  5.531737 4.748785e-06     * 0.5020495
+
+$`Mauchly's Test for Sphericity`
+     Effect           W           p p&lt;.05
+3       dpe 0.002507464 0.007421478     *
+4 group:dpe 0.002507464 0.007421478     *
+
+$`Sphericity Corrections`
+     Effect       GGe        p[GG] p[GG]&lt;.05       HFe        p[HF] p[HF]&lt;.05
+3       dpe 0.4698995 7.240063e-09         * 0.7063488 2.378893e-12         *
+4 group:dpe 0.4698995 1.041644e-03         * 0.7063488 9.172502e-05         *</code></pre>
+</div>
+</div>
+</div>
+<div id="tabset-1-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-2-tab">
+<p>Results suggest that while there were no significant differences between groups, there were significant changes over time, and the pattern of these changes differed significantly among the groups.</p>
+<div class="cell">
+<details open="">
+<summary>Hide code</summary>
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>serum_anova <span class="ot">&lt;-</span> ez<span class="sc">::</span><span class="fu">ezANOVA</span>(<span class="at">data =</span> contact_groups, <span class="at">dv =</span> .(serum), <span class="at">wid =</span> .(animal), <span class="at">within =</span> .(dpe), <span class="at">between =</span> .(group))</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>serum_anova</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>$ANOVA
+     Effect DFn DFd         F            p p&lt;.05       ges
+2     group   2   9  2.789541 1.141052e-01       0.1386202
+3       dpe   6  54 25.182482 5.082150e-14     * 0.6744439
+4 group:dpe  12  54  7.951312 2.761527e-08     * 0.5667711
+
+$`Mauchly's Test for Sphericity`
+     Effect            W            p p&lt;.05
+3       dpe 1.265279e-05 6.228482e-08     *
+4 group:dpe 1.265279e-05 6.228482e-08     *
+
+$`Sphericity Corrections`
+     Effect       GGe        p[GG] p[GG]&lt;.05       HFe        p[HF] p[HF]&lt;.05
+3       dpe 0.2446423 7.610504e-05         * 0.2805428 2.727829e-05         *
+4 group:dpe 0.2446423 2.894414e-03         * 0.2805428 1.633022e-03         *</code></pre>
+</div>
+</div>
+</div>
+<div id="tabset-1-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-3-tab">
+<p>Results indicate that lesion scores differed significantly between the groups and across the days post-exposure, with an interaction effect suggesting that the temporal pattern of lesion severity varied among the groups.</p>
+<div class="cell">
+<details open="">
+<summary>Hide code</summary>
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>score_anova <span class="ot">&lt;-</span> ez<span class="sc">::</span><span class="fu">ezANOVA</span>(<span class="at">data =</span> contact_groups, <span class="at">dv =</span> .(score), <span class="at">wid =</span> .(animal), <span class="at">within =</span> .(dpe), <span class="at">between =</span> .(group))</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>score_anova</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>$ANOVA
+     Effect DFn DFd         F            p p&lt;.05       ges
+2     group   2   9  5.860606 2.345433e-02     * 0.2550442
+3       dpe   6  54 45.873199 1.823174e-19     * 0.7897890
+4 group:dpe  12  54  3.038905 2.531711e-03     * 0.3323484
+
+$`Mauchly's Test for Sphericity`
+     Effect            W            p p&lt;.05
+3       dpe 6.163627e-19 5.763765e-47     *
+4 group:dpe 6.163627e-19 5.763765e-47     *
+
+$`Sphericity Corrections`
+     Effect       GGe        p[GG] p[GG]&lt;.05       HFe        p[HF] p[HF]&lt;.05
+3       dpe 0.4739793 2.829807e-10         * 0.7157848 1.639730e-14         *
+4 group:dpe 0.4739793 2.364298e-02         * 0.7157848 8.310038e-03         *</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+
 </section>
 
 </main> <!-- /main -->

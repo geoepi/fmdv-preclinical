@@ -81,4 +81,58 @@ plot_donors(antem_df)
 ```{r fig.width=8, fig.height=8, warning=FALSE, message=FALSE}
 plot_contact_groups(antem_df)
 ```
+  
+## ANOVA  
+To evaluate the differences in nasal, serum, and lesion score among groups and over time, repeated measures ANOVAs were applied using the *ezANOVA()* function from the **ez** R-package. The analyses included within-subjects (days post-exposure, dpe) and between-subjects (group) factors, with nasal, serum, and lesion scores as the dependent variables. Mauchly's test was conducted to test the assumption of sphericity. Where violations were found, Greenhouse-Geisser and Huynh-Feldt corrections were applied.  
+  
+The repeated measures ANOVA results for nasal, serum, and lesion scores were significant. For nasal virus quantity, there were significant main effects of group (F(2, 9) = 9.22, p = 0.0066) and days post-exposure (dpe) (F(6, 54) = 33.99, p < 0.0001), as well as a significant interaction between group and dpe (F(12, 54) = 5.53, p < 0.0001), suggesting that nasal virus quantity varied significantly across groups and time, with different temporal patterns among groups. For serum virus quantity, no significant main effect of group was found (F(2, 9) = 2.79, p = 0.114), but there were significant effects of dpe (F(6, 54) = 25.18, p < 0.0001) and the group by dpe interaction (F(12, 54) = 7.95, p < 0.0001), indicating significant changes over time and different temporal patterns among groups. Lesion scores showed significant main effects of group (F(2, 9) = 5.86, p = 0.023) and dpe (F(6, 54) = 45.87, p < 0.0001), and a significant interaction between group and dpe (F(12, 54) = 3.04, p = 0.0025), indicating significant differences in lesion severity across groups and over time, with varying temporal patterns among the groups.    
+
+**Prepare Data**    
+```{r}
+contact_groups <- antem_df %>%
+  filter(group %in% c("Group 2", "Group 3", "Group 4")) %>%
+  select(animal, group, nasal, serum, dpe, score) %>%
+  mutate(
+    score = replace_na(score, 0)) %>%
+  drop_na() %>%
+  mutate(
+    score = replace_na(score, 0),          
+    nasal = replace(nasal, nasal == 45, 0), 
+    serum = replace(serum, serum == 45, 0),
+    dpe = as.factor(dpe),                   
+    animal = as.factor(animal),            
+    group = as.factor(group)                
+  ) %>%
+  as.data.frame()
+```
+
+::: panel-tabset
+
+## Nasal  
+Results indicate that nasal virus quantity differed significantly between the groups and across the days post-exposure, with an interaction effect suggesting that the temporal pattern of virus quantity varied among the groups.
+```{r}
+nasal_anova <- ez::ezANOVA(data = contact_groups, dv = .(nasal), wid = .(animal), within = .(dpe), between = .(group))
+nasal_anova
+```
+
+## Serum  
+Results suggest that while there were no significant differences between groups, there were significant changes over time, and the pattern of these changes differed significantly among the groups.
+```{r}
+serum_anova <- ez::ezANOVA(data = contact_groups, dv = .(serum), wid = .(animal), within = .(dpe), between = .(group))
+serum_anova
+```
+
+## Score  
+Results indicate that lesion scores differed significantly between the groups and across the days post-exposure, with an interaction effect suggesting that the temporal pattern of lesion severity varied among the groups. 
+```{r}
+score_anova <- ez::ezANOVA(data = contact_groups, dv = .(score), wid = .(animal), within = .(dpe), between = .(group))
+score_anova
+```
+
+:::
+
+
+
+
+
 

@@ -64,15 +64,18 @@ antem_df <- antem_df %>%
 
 ## Organize Data  
 ```{r}
-longitud_df <- antem_df %>%
-  mutate(y_shed = if_else(nasal == 0 | nasal == 45, NA, nasal),
-         y_serum = if_else(serum == 0 | serum == 45, NA, serum),
+longitud_df <- antem_df %>% 
+  filter(group != "Group 1") %>%
+  mutate(y_shed = if_else(nasal == 0, NA, nasal),
+         y_shed = if_else(nasal == 45, 0, y_shed),
+         y_serum = if_else(serum == 0, NA, serum),
+         y_serum = if_else(serum == 45, 0, y_serum),
          temp_sc = as.numeric(scale(temp, scale = TRUE, center = TRUE)),
          time_step = dpe + 1)
 
 #plot(density(longitud_df$y_serum, na.rm=T)) # ~normal
 ```
-  
+    
 ## Shedding Rates  
 Run model for shedding (nasal swabs)
 ```{r}
@@ -108,6 +111,17 @@ shed_model <- inla(shed_form,
 
 # summary(shed_model)
 ```
+
+Plot Time Effect  
+```{r fig.width=8, fig.height=6}
+time_df <- shed_model$summary.random$time_step[, c(1, 4:10)]
+names(time_df) <- c("DPE", "Q_0.025", "Q_0.05", "Q_0.25", "Q_0.5", "Q_0.75", "Q_0.95", "Q_0.975")
+
+time_df$DPE <- time_df$DPE - 1
+
+plot_time_rw(time_df)
+```
+
 
 Plot animals  
 ```{r fig.width=8, fig.height=5}
@@ -179,7 +193,18 @@ serum_model <- inla(serum_form,
 
 # summary(serum_model)
 ```
+  
+Plot Time Effect  
+```{r fig.width=8, fig.height=6}
+time_df <- serum_model$summary.random$time_step[, c(1, 4:10)]
+names(time_df) <- c("DPE", "Q_0.025", "Q_0.05", "Q_0.25", "Q_0.5", "Q_0.75", "Q_0.95", "Q_0.975")
 
+time_df$DPE <- time_df$DPE - 1
+
+plot_time_rw(time_df)
+```
+
+  
 Plot animals  
 ```{r fig.width=8, fig.height=5}
 animal_df <- serum_model$summary.random$animal[, c(1, 4:10)]
@@ -218,6 +243,7 @@ plot_fixed_posterior(temp_post, model = serum_model, xlabel = "Intercept", fixed
 
 
 ## Lesion Score   
+
 Run model for lesion score
 ```{r}
 pc_prec_rw <- list(theta = list(prior="pc.prec", 
@@ -250,7 +276,17 @@ score_model <- inla(score_form,
 
 # summary(score_model)
 ```
+  
+Plot Time Effect  
+```{r fig.width=8, fig.height=6}
+time_df <- score_model$summary.random$time_step[, c(1, 4:10)]
+names(time_df) <- c("DPE", "Q_0.025", "Q_0.05", "Q_0.25", "Q_0.5", "Q_0.75", "Q_0.95", "Q_0.975")
 
+time_df$DPE <- time_df$DPE - 1
+
+plot_time_rw(time_df)
+```
+    
 Plot animals  
 ```{r fig.width=8, fig.height=5}
 animal_df <- score_model$summary.random$animal[, c(1, 4:10)]
@@ -323,7 +359,18 @@ temper_model <- inla(temper_form,
 
 # summary(temper_model)
 ```
+  
+Plot Time Effect  
+```{r fig.width=8, fig.height=6}
+time_df <- temper_model$summary.random$time_step[, c(1, 4:10)]
+names(time_df) <- c("DPE", "Q_0.025", "Q_0.05", "Q_0.25", "Q_0.5", "Q_0.75", "Q_0.95", "Q_0.975")
 
+time_df$DPE <- time_df$DPE - 1
+
+plot_time_rw(time_df)
+```
+      
+    
 Plot animals  
 ```{r fig.width=8, fig.height=5}
 animal_df <- temper_model$summary.random$animal[, c(1, 4:10)]
@@ -354,3 +401,11 @@ Score
 ```{r}
 plot_fixed_posterior(temp_post, model = temper_model, xlabel = "Score", fixed_eff = "score")
 ```
+
+
+
+
+
+
+
+
