@@ -63,7 +63,7 @@ antem_df <- antem_df %>%
 ```
 
 ## Calculate Subclinical  
-Study-wide rates.
+Study-wide rates.  These estimates are the results from the [Incubation](https://geoepi.github.io/fmdv-preclinical/incubation.html) and [Latent](https://geoepi.github.io/fmdv-preclinical/latent.html) analyses.  
 ```{r} 
 # from other analysis
 incubation_samples <- readRDS(here("assets/incubation_samples.rds"))
@@ -87,7 +87,7 @@ medians_df$Name <- rownames(medians_df)
 medians_df$Name <- ordered(factor(medians_df$Name), c("Latent", "Subclinical", "Incubation"))
 ```
   
-Subclinical by group
+Subclinical by group.  These estimates are the results from the [Incubation](https://geoepi.github.io/fmdv-preclinical/incubation.html) and [Latent](https://geoepi.github.io/fmdv-preclinical/latent.html) analyses.
 ```{r}
 incubation_aft <- readRDS(here("assets/incubation_aft_median.rds"))
 latent_aft <- readRDS(here("assets/latent_aft_median.rds"))  
