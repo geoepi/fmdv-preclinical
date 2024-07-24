@@ -71,6 +71,7 @@ clin_start_df <- as.data.frame(
 )
 ```
 
+## Prepare Data  
 Quick stats to check data
 ```{r}
 unique(clin_start_df$Event)
@@ -84,7 +85,7 @@ mean(check_stats$dpe)
 median(check_stats$dpe)
 ```
   
-## Remove Group 1
+Remove Group 1
 Group 1 was not infected and has no expectation of developing disease.  Animals that were infected, verified by nasal, serum, or fever but never developed lesions are censored.  
 ```{r}
 clin_start_df <- clin_start_df %>%
@@ -100,19 +101,19 @@ clin_start_df %>%
             median_dpe = median(dpe))
 ```
   
-## Scale Time
+Scale Time  
 Add an arbitrarily small value to eliminate zeros.  Really not need with his specific data set, by an important step.  
 ```{r}
 clin_start_df$scaled_duration <- clin_start_df$dpe + 0.0001
 ```
   
-## Weighted Contacts
+Weighted Contacts  
 Contact with groups by donors was sequential at 24hr intervals, shedding rates (nasal swabs) varied over this period. 
 ```{r}
 shed_rates <- antem_df %>%
   filter(group == "donor") %>%
   group_by(dpi) %>%
-  summarise(tot_shed = sum(ifelse(nasal == 45, 0, nasal))) %>%
+  summarise(tot_shed = sum(ifelse(nasal == 45, 0, nasal), na.rm=T)) %>%
   mutate(group = paste("Group", dpi, sep=" "))
 
 # match cumulative shed from donors based on time of contact
@@ -125,24 +126,28 @@ clin_start_df$donor_shed <- with(shed_rates,
 clin_start_df$shed_time <- as.integer(as.factor(clin_start_df$group))
 ```
 
-## Response Variable
-Creating a survival object to ensure time and censored animals are correctly indicated.
+
+## Models  
+
+Creating a survival model object to ensure time and censored animals are correctly indicated.
 ```{r}
 surv_obj <- inla.surv(clin_start_df$scaled_duration, clin_start_df$Event)
 ```
-
-## Survival Model
-
+  
+::: panel-tabset  
+## Parametric Suvival  
+Parametric model for study-wide average duration.  
 ```{r}
 return_quants <- c(0.025, 0.05, 0.25, 0.5, 0.75, 0.95, 0.975)
 
 pc_prec_iid <- list(theta = list(prior="pc.prec", 
                                  param=c(0.5, 0.001)))
 
-incubation_dur <- inla(surv_obj ~ 1 +
+incubation_dur <- inla(surv_obj ~ 1 + 
                          f(shed_time, donor_shed,
                            model = "rw1",
                            constr=TRUE,
+                           scale.model = TRUE,
                            hyper=pc_prec_iid),
                         data = clin_start_df, 
                         verbose=FALSE,
@@ -152,8 +157,31 @@ incubation_dur <- inla(surv_obj ~ 1 +
                         control.compute=list(dic = TRUE, cpo = FALSE, waic = TRUE))
 ```
 
+## Accelerated Failure Time (AFT)  
+Treatment is specific to `group` therefore using `group` below to identify important differences.    
+```{r}
+return_quants <- c(0.025, 0.05, 0.25, 0.5, 0.75, 0.95, 0.975)
+
+pc_prec_iid <- list(theta = list(prior="pc.prec", 
+                                 param=c(0.5, 0.001)))
+
+incubation_aft <- inla(surv_obj ~ 1 +
+                       f(group,
+                           model = "iid",
+                           constr=FALSE,
+                           hyper=pc_prec_iid),
+                        data = clin_start_df, 
+                        verbose=FALSE,
+                        quantiles = return_quants,
+                        family = "lognormal.surv",
+                        control.fixed = list(prec = 1, prec.intercept  = 0.0001),
+                        control.compute=list(dic = TRUE, cpo = FALSE, waic = TRUE))
+```
+
+:::
+
 ## Sample Marginals
-Performing sampling on the model results
+Performing sampling on the parametric model results
 ```{r}
 incubation_samples <- compute_survival_marginals(incubation_dur, 14)
 ```
@@ -164,14 +192,39 @@ median_incubation <- find_closest_quant(incubation_samples, 0.5)
 median_incubation
 ```
 
-## Survival Curve
+## Survival Curve  
+Exceedance survival curve fro parametric model.  
 ```{r fig.width=8, fig.height=6}
 plot_survival_marginals(incubation_samples, x_max = 14, xlabel = "Incubation Phase Duration")
 ```
+
+## AFT Treament Effects 
+Get treatment-level estimated duration
+```{r}
+aft_incubation <- incubation_aft$summary.random$group[,c(1,4,6,7,8, 10)]
+names(aft_incubation) <- c("Group","Q_0.025","Q_0.25", "Q_0.5", "Q_0.75", "Q_0.975")
+mean_aft <- incubation_aft$summary.fixed$mean
+
+aft_incubation[,2:6] <- exp(aft_incubation[,2:6] + mean_aft)
+study_wide <- exp(incubation_aft$summary.fixed[,c(3,5:7,9)])
+rownames(study_wide) <- NULL
+names(study_wide) <- c("Q_0.025","Q_0.25", "Q_0.5", "Q_0.75", "Q_0.975")
+study_wide$Group <- "study"
+aft_incubation <- rbind(study_wide, aft_incubation)
+aft_incubation
+```
+  
+Compare treatment groups  
+```{r fig.width=8, fig.height=6}
+plot_aft_linerange(incubation_aft, ylabel = "Duration (days)")
+```
+
+
 
 save incubation samples
 ```{r eval=FALSE}
 saveRDS(incubation_samples, here("assets/incubation_samples.rds"))
 saveRDS(median_incubation, here("assets/incubation_median.rds"))
+saveRDS(aft_incubation, here("assets/incubation_aft_median.rds"))
 ```
 

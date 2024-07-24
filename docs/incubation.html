@@ -198,13 +198,11 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
    
   <ul class="collapse">
   <li><a href="#clinical-onset" id="toc-clinical-onset" class="nav-link active" data-scroll-target="#clinical-onset">Clinical Onset</a></li>
-  <li><a href="#remove-group-1" id="toc-remove-group-1" class="nav-link" data-scroll-target="#remove-group-1">Remove Group 1</a></li>
-  <li><a href="#scale-time" id="toc-scale-time" class="nav-link" data-scroll-target="#scale-time">Scale Time</a></li>
-  <li><a href="#weighted-contacts" id="toc-weighted-contacts" class="nav-link" data-scroll-target="#weighted-contacts">Weighted Contacts</a></li>
-  <li><a href="#response-variable" id="toc-response-variable" class="nav-link" data-scroll-target="#response-variable">Response Variable</a></li>
-  <li><a href="#survival-model" id="toc-survival-model" class="nav-link" data-scroll-target="#survival-model">Survival Model</a></li>
+  <li><a href="#prepare-data" id="toc-prepare-data" class="nav-link" data-scroll-target="#prepare-data">Prepare Data</a></li>
+  <li><a href="#models" id="toc-models" class="nav-link" data-scroll-target="#models">Models</a></li>
   <li><a href="#sample-marginals" id="toc-sample-marginals" class="nav-link" data-scroll-target="#sample-marginals">Sample Marginals</a></li>
   <li><a href="#survival-curve" id="toc-survival-curve" class="nav-link" data-scroll-target="#survival-curve">Survival Curve</a></li>
+  <li><a href="#aft-treament-effects" id="toc-aft-treament-effects" class="nav-link" data-scroll-target="#aft-treament-effects">AFT Treament Effects</a></li>
   </ul>
 </nav>
     </div>
@@ -259,6 +257,9 @@ pre {
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
+</section>
+<section id="prepare-data" class="level2">
+<h2 class="anchored" data-anchor-id="prepare-data">Prepare Data</h2>
 <p>Quick stats to check data</p>
 <div class="cell">
 <details open="">
@@ -300,10 +301,7 @@ pre {
 <pre><code>[1] 3</code></pre>
 </div>
 </div>
-</section>
-<section id="remove-group-1" class="level2">
-<h2 class="anchored" data-anchor-id="remove-group-1">Remove Group 1</h2>
-<p>Group 1 was not infected and has no expectation of developing disease. Animals that were infected, verified by nasal, serum, or fever but never developed lesions are censored.</p>
+<p>Remove Group 1 Group 1 was not infected and has no expectation of developing disease. Animals that were infected, verified by nasal, serum, or fever but never developed lesions are censored.</p>
 <div class="cell">
 <details open="">
 <summary>Hide code</summary>
@@ -340,27 +338,23 @@ pre {
 </div>
 </div>
 </div>
-</section>
-<section id="scale-time" class="level2">
-<h2 class="anchored" data-anchor-id="scale-time">Scale Time</h2>
-<p>Add an arbitrarily small value to eliminate zeros. Really not need with his specific data set, by an important step.</p>
+<p>Scale Time<br>
+Add an arbitrarily small value to eliminate zeros. Really not need with his specific data set, by an important step.</p>
 <div class="cell">
 <details open="">
 <summary>Hide code</summary>
 <div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>clin_start_df<span class="sc">$</span>scaled_duration <span class="ot">&lt;-</span> clin_start_df<span class="sc">$</span>dpe <span class="sc">+</span> <span class="fl">0.0001</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
-</section>
-<section id="weighted-contacts" class="level2">
-<h2 class="anchored" data-anchor-id="weighted-contacts">Weighted Contacts</h2>
-<p>Contact with groups by donors was sequential at 24hr intervals, shedding rates (nasal swabs) varied over this period.</p>
+<p>Weighted Contacts<br>
+Contact with groups by donors was sequential at 24hr intervals, shedding rates (nasal swabs) varied over this period.</p>
 <div class="cell">
 <details open="">
 <summary>Hide code</summary>
 <div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>shed_rates <span class="ot">&lt;-</span> antem_df <span class="sc">%&gt;%</span></span>
 <span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(group <span class="sc">==</span> <span class="st">"donor"</span>) <span class="sc">%&gt;%</span></span>
 <span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(dpi) <span class="sc">%&gt;%</span></span>
-<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">tot_shed =</span> <span class="fu">sum</span>(<span class="fu">ifelse</span>(nasal <span class="sc">==</span> <span class="dv">45</span>, <span class="dv">0</span>, nasal))) <span class="sc">%&gt;%</span></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">tot_shed =</span> <span class="fu">sum</span>(<span class="fu">ifelse</span>(nasal <span class="sc">==</span> <span class="dv">45</span>, <span class="dv">0</span>, nasal), <span class="at">na.rm=</span>T)) <span class="sc">%&gt;%</span></span>
 <span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">group =</span> <span class="fu">paste</span>(<span class="st">"Group"</span>, dpi, <span class="at">sep=</span><span class="st">" "</span>))</span>
 <span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a><span class="co"># match cumulative shed from donors based on time of contact</span></span>
@@ -374,18 +368,20 @@ pre {
 </details>
 </div>
 </section>
-<section id="response-variable" class="level2">
-<h2 class="anchored" data-anchor-id="response-variable">Response Variable</h2>
-<p>Creating a survival object to ensure time and censored animals are correctly indicated.</p>
+<section id="models" class="level2">
+<h2 class="anchored" data-anchor-id="models">Models</h2>
+<p>Creating a survival model object to ensure time and censored animals are correctly indicated.</p>
 <div class="cell">
 <details open="">
 <summary>Hide code</summary>
 <div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>surv_obj <span class="ot">&lt;-</span> <span class="fu">inla.surv</span>(clin_start_df<span class="sc">$</span>scaled_duration, clin_start_df<span class="sc">$</span>Event)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
-</section>
-<section id="survival-model" class="level2">
-<h2 class="anchored" data-anchor-id="survival-model">Survival Model</h2>
+<div class="panel-tabset">
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-1-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-1" role="tab" aria-controls="tabset-1-1" aria-selected="true">Parametric Suvival</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-2" role="tab" aria-controls="tabset-1-2" aria-selected="false">Accelerated Failure Time (AFT)</a></li></ul>
+<div class="tab-content">
+<div id="tabset-1-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-1-1-tab">
+<p>Parametric model for study-wide average duration.</p>
 <div class="cell">
 <details open="">
 <summary>Hide code</summary>
@@ -394,35 +390,66 @@ pre {
 <span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>pc_prec_iid <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">theta =</span> <span class="fu">list</span>(<span class="at">prior=</span><span class="st">"pc.prec"</span>, </span>
 <span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>                                 <span class="at">param=</span><span class="fu">c</span>(<span class="fl">0.5</span>, <span class="fl">0.001</span>)))</span>
 <span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>incubation_dur <span class="ot">&lt;-</span> <span class="fu">inla</span>(surv_obj <span class="sc">~</span> <span class="dv">1</span> <span class="sc">+</span></span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>incubation_dur <span class="ot">&lt;-</span> <span class="fu">inla</span>(surv_obj <span class="sc">~</span> <span class="dv">1</span> <span class="sc">+</span> </span>
 <span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a>                         <span class="fu">f</span>(shed_time, donor_shed,</span>
 <span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a>                           <span class="at">model =</span> <span class="st">"rw1"</span>,</span>
 <span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a>                           <span class="at">constr=</span><span class="cn">TRUE</span>,</span>
-<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a>                           <span class="at">hyper=</span>pc_prec_iid),</span>
-<span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a>                        <span class="at">data =</span> clin_start_df, </span>
-<span id="cb17-12"><a href="#cb17-12" aria-hidden="true" tabindex="-1"></a>                        <span class="at">verbose=</span><span class="cn">FALSE</span>,</span>
-<span id="cb17-13"><a href="#cb17-13" aria-hidden="true" tabindex="-1"></a>                        <span class="at">quantiles =</span> return_quants,</span>
-<span id="cb17-14"><a href="#cb17-14" aria-hidden="true" tabindex="-1"></a>                        <span class="at">family =</span> <span class="st">"exponential.surv"</span>,</span>
-<span id="cb17-15"><a href="#cb17-15" aria-hidden="true" tabindex="-1"></a>                        <span class="at">control.fixed =</span> <span class="fu">list</span>(<span class="at">prec =</span> <span class="dv">1</span>, <span class="at">prec.intercept  =</span> <span class="fl">0.0001</span>),</span>
-<span id="cb17-16"><a href="#cb17-16" aria-hidden="true" tabindex="-1"></a>                        <span class="at">control.compute=</span><span class="fu">list</span>(<span class="at">dic =</span> <span class="cn">TRUE</span>, <span class="at">cpo =</span> <span class="cn">FALSE</span>, <span class="at">waic =</span> <span class="cn">TRUE</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a>                           <span class="at">scale.model =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a>                           <span class="at">hyper=</span>pc_prec_iid),</span>
+<span id="cb17-12"><a href="#cb17-12" aria-hidden="true" tabindex="-1"></a>                        <span class="at">data =</span> clin_start_df, </span>
+<span id="cb17-13"><a href="#cb17-13" aria-hidden="true" tabindex="-1"></a>                        <span class="at">verbose=</span><span class="cn">FALSE</span>,</span>
+<span id="cb17-14"><a href="#cb17-14" aria-hidden="true" tabindex="-1"></a>                        <span class="at">quantiles =</span> return_quants,</span>
+<span id="cb17-15"><a href="#cb17-15" aria-hidden="true" tabindex="-1"></a>                        <span class="at">family =</span> <span class="st">"exponential.surv"</span>,</span>
+<span id="cb17-16"><a href="#cb17-16" aria-hidden="true" tabindex="-1"></a>                        <span class="at">control.fixed =</span> <span class="fu">list</span>(<span class="at">prec =</span> <span class="dv">1</span>, <span class="at">prec.intercept  =</span> <span class="fl">0.0001</span>),</span>
+<span id="cb17-17"><a href="#cb17-17" aria-hidden="true" tabindex="-1"></a>                        <span class="at">control.compute=</span><span class="fu">list</span>(<span class="at">dic =</span> <span class="cn">TRUE</span>, <span class="at">cpo =</span> <span class="cn">FALSE</span>, <span class="at">waic =</span> <span class="cn">TRUE</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
+</div>
+</div>
+<div id="tabset-1-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-2-tab">
+<p>Treatment is specific to <code>group</code> therefore using <code>group</code> below to identify important differences.</p>
+<div class="cell">
+<details open="">
+<summary>Hide code</summary>
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>return_quants <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="fl">0.025</span>, <span class="fl">0.05</span>, <span class="fl">0.25</span>, <span class="fl">0.5</span>, <span class="fl">0.75</span>, <span class="fl">0.95</span>, <span class="fl">0.975</span>)</span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>pc_prec_iid <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">theta =</span> <span class="fu">list</span>(<span class="at">prior=</span><span class="st">"pc.prec"</span>, </span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>                                 <span class="at">param=</span><span class="fu">c</span>(<span class="fl">0.5</span>, <span class="fl">0.001</span>)))</span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>incubation_aft <span class="ot">&lt;-</span> <span class="fu">inla</span>(surv_obj <span class="sc">~</span> <span class="dv">1</span> <span class="sc">+</span></span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a>                       <span class="fu">f</span>(group,</span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a>                           <span class="at">model =</span> <span class="st">"iid"</span>,</span>
+<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a>                           <span class="at">constr=</span><span class="cn">FALSE</span>,</span>
+<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a>                           <span class="at">hyper=</span>pc_prec_iid),</span>
+<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a>                        <span class="at">data =</span> clin_start_df, </span>
+<span id="cb18-12"><a href="#cb18-12" aria-hidden="true" tabindex="-1"></a>                        <span class="at">verbose=</span><span class="cn">FALSE</span>,</span>
+<span id="cb18-13"><a href="#cb18-13" aria-hidden="true" tabindex="-1"></a>                        <span class="at">quantiles =</span> return_quants,</span>
+<span id="cb18-14"><a href="#cb18-14" aria-hidden="true" tabindex="-1"></a>                        <span class="at">family =</span> <span class="st">"lognormal.surv"</span>,</span>
+<span id="cb18-15"><a href="#cb18-15" aria-hidden="true" tabindex="-1"></a>                        <span class="at">control.fixed =</span> <span class="fu">list</span>(<span class="at">prec =</span> <span class="dv">1</span>, <span class="at">prec.intercept  =</span> <span class="fl">0.0001</span>),</span>
+<span id="cb18-16"><a href="#cb18-16" aria-hidden="true" tabindex="-1"></a>                        <span class="at">control.compute=</span><span class="fu">list</span>(<span class="at">dic =</span> <span class="cn">TRUE</span>, <span class="at">cpo =</span> <span class="cn">FALSE</span>, <span class="at">waic =</span> <span class="cn">TRUE</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning in sqrt(ee): NaNs produced</code></pre>
+</div>
+</div>
+</div>
+</div>
 </div>
 </section>
 <section id="sample-marginals" class="level2">
 <h2 class="anchored" data-anchor-id="sample-marginals">Sample Marginals</h2>
-<p>Performing sampling on the model results</p>
+<p>Performing sampling on the parametric model results</p>
 <div class="cell">
 <details open="">
 <summary>Hide code</summary>
-<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>incubation_samples <span class="ot">&lt;-</span> <span class="fu">compute_survival_marginals</span>(incubation_dur, <span class="dv">14</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>incubation_samples <span class="ot">&lt;-</span> <span class="fu">compute_survival_marginals</span>(incubation_dur, <span class="dv">14</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 <p>Check estimates at the 0.5 probability (median)</p>
 <div class="cell">
 <details open="">
 <summary>Hide code</summary>
-<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>median_incubation <span class="ot">&lt;-</span> <span class="fu">find_closest_quant</span>(incubation_samples, <span class="fl">0.5</span>)</span>
-<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>median_incubation</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>median_incubation <span class="ot">&lt;-</span> <span class="fu">find_closest_quant</span>(incubation_samples, <span class="fl">0.5</span>)</span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>median_incubation</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>$quant0.025
@@ -435,30 +462,124 @@ $quant0.5
 [1] 2.901
 
 $quant0.75
-[1] 3.601
+[1] 3.701
 
 $quant0.975
-[1] 5.901</code></pre>
+[1] 6.101</code></pre>
 </div>
 </div>
 </section>
 <section id="survival-curve" class="level2">
 <h2 class="anchored" data-anchor-id="survival-curve">Survival Curve</h2>
+<p>Exceedance survival curve fro parametric model.</p>
 <div class="cell">
 <details open="">
 <summary>Hide code</summary>
-<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_survival_marginals</span>(incubation_samples, <span class="at">x_max =</span> <span class="dv">14</span>, <span class="at">xlabel =</span> <span class="st">"Incubation Phase Duration"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_survival_marginals</span>(incubation_samples, <span class="at">x_max =</span> <span class="dv">14</span>, <span class="at">xlabel =</span> <span class="st">"Incubation Phase Duration"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
-<p><img src="incubation_files/figure-html/unnamed-chunk-12-1.png" class="img-fluid" width="768"></p>
+<p><img src="incubation_files/figure-html/unnamed-chunk-13-1.png" class="img-fluid" width="768"></p>
+</div>
+</div>
+</section>
+<section id="aft-treament-effects" class="level2">
+<h2 class="anchored" data-anchor-id="aft-treament-effects">AFT Treament Effects</h2>
+<p>Get treatment-level estimated duration</p>
+<div class="cell">
+<details open="">
+<summary>Hide code</summary>
+<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>aft_incubation <span class="ot">&lt;-</span> incubation_aft<span class="sc">$</span>summary.random<span class="sc">$</span>group[,<span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">4</span>,<span class="dv">6</span>,<span class="dv">7</span>,<span class="dv">8</span>, <span class="dv">10</span>)]</span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(aft_incubation) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"Group"</span>,<span class="st">"Q_0.025"</span>,<span class="st">"Q_0.25"</span>, <span class="st">"Q_0.5"</span>, <span class="st">"Q_0.75"</span>, <span class="st">"Q_0.975"</span>)</span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>mean_aft <span class="ot">&lt;-</span> incubation_aft<span class="sc">$</span>summary.fixed<span class="sc">$</span>mean</span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a>aft_incubation[,<span class="dv">2</span><span class="sc">:</span><span class="dv">6</span>] <span class="ot">&lt;-</span> <span class="fu">exp</span>(aft_incubation[,<span class="dv">2</span><span class="sc">:</span><span class="dv">6</span>] <span class="sc">+</span> mean_aft)</span>
+<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a>study_wide <span class="ot">&lt;-</span> <span class="fu">exp</span>(incubation_aft<span class="sc">$</span>summary.fixed[,<span class="fu">c</span>(<span class="dv">3</span>,<span class="dv">5</span><span class="sc">:</span><span class="dv">7</span>,<span class="dv">9</span>)])</span>
+<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a><span class="fu">rownames</span>(study_wide) <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(study_wide) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"Q_0.025"</span>,<span class="st">"Q_0.25"</span>, <span class="st">"Q_0.5"</span>, <span class="st">"Q_0.75"</span>, <span class="st">"Q_0.975"</span>)</span>
+<span id="cb24-9"><a href="#cb24-9" aria-hidden="true" tabindex="-1"></a>study_wide<span class="sc">$</span>Group <span class="ot">&lt;-</span> <span class="st">"study"</span></span>
+<span id="cb24-10"><a href="#cb24-10" aria-hidden="true" tabindex="-1"></a>aft_incubation <span class="ot">&lt;-</span> <span class="fu">rbind</span>(study_wide, aft_incubation)</span>
+<span id="cb24-11"><a href="#cb24-11" aria-hidden="true" tabindex="-1"></a>aft_incubation</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<div class="kable-table">
+<table class="table table-sm table-striped">
+<thead>
+<tr class="header">
+<th style="text-align: right;">Q_0.025</th>
+<th style="text-align: right;">Q_0.25</th>
+<th style="text-align: right;">Q_0.5</th>
+<th style="text-align: right;">Q_0.75</th>
+<th style="text-align: right;">Q_0.975</th>
+<th style="text-align: left;">Group</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">2.289518</td>
+<td style="text-align: right;">2.858287</td>
+<td style="text-align: right;">3.170443</td>
+<td style="text-align: right;">3.518581</td>
+<td style="text-align: right;">4.405664</td>
+<td style="text-align: left;">study</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2.653615</td>
+<td style="text-align: right;">3.380300</td>
+<td style="text-align: right;">3.808423</td>
+<td style="text-align: right;">4.301140</td>
+<td style="text-align: right;">5.558763</td>
+<td style="text-align: left;">donor</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">3.506350</td>
+<td style="text-align: right;">4.422156</td>
+<td style="text-align: right;">4.962956</td>
+<td style="text-align: right;">5.582167</td>
+<td style="text-align: right;">7.161666</td>
+<td style="text-align: left;">Group 2</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">1.464660</td>
+<td style="text-align: right;">1.880941</td>
+<td style="text-align: right;">2.116881</td>
+<td style="text-align: right;">2.376889</td>
+<td style="text-align: right;">2.997234</td>
+<td style="text-align: left;">Group 3</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">1.765721</td>
+<td style="text-align: right;">2.255789</td>
+<td style="text-align: right;">2.530923</td>
+<td style="text-align: right;">2.832588</td>
+<td style="text-align: right;">3.563349</td>
+<td style="text-align: left;">Group 4</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<p>Compare treatment groups</p>
+<div class="cell">
+<details open="">
+<summary>Hide code</summary>
+<div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_aft_linerange</span>(incubation_aft, <span class="at">ylabel =</span> <span class="st">"Duration (days)"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: Using `size` aesthetic for lines was deprecated in ggplot2 3.4.0.
+ℹ Please use `linewidth` instead.</code></pre>
+</div>
+<div class="cell-output-display">
+<p><img src="incubation_files/figure-html/unnamed-chunk-15-1.png" class="img-fluid" width="768"></p>
 </div>
 </div>
 <p>save incubation samples</p>
 <div class="cell">
 <details open="">
 <summary>Hide code</summary>
-<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(incubation_samples, <span class="fu">here</span>(<span class="st">"assets/incubation_samples.rds"</span>))</span>
-<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(median_incubation, <span class="fu">here</span>(<span class="st">"assets/incubation_median.rds"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(incubation_samples, <span class="fu">here</span>(<span class="st">"assets/incubation_samples.rds"</span>))</span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(median_incubation, <span class="fu">here</span>(<span class="st">"assets/incubation_median.rds"</span>))</span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(aft_incubation, <span class="fu">here</span>(<span class="st">"assets/incubation_aft_median.rds"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 

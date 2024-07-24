@@ -62,13 +62,14 @@ antem_df <- antem_df %>%
 
 ```
 
-## Calculate Subclinical
+## Calculate Subclinical  
+Study-wide rates.
 ```{r} 
 # from other analysis
 incubation_samples <- readRDS(here("assets/incubation_samples.rds"))
 latent_samples <- readRDS(here("assets/latent_samples.rds"))
 median_incubation <- readRDS(here("assets/incubation_median.rds"))
-median_latent <- readRDS(here("assets/latent_median.rds"))
+median_latent <- readRDS(here("assets/latent_median.rds")) 
  
 median_subclinical <- Map(function(x, y) x - y, median_incubation, median_latent)
 
@@ -85,17 +86,51 @@ medians_df
 medians_df$Name <- rownames(medians_df)
 medians_df$Name <- ordered(factor(medians_df$Name), c("Latent", "Subclinical", "Incubation"))
 ```
+  
+Subclinical by group
+```{r}
+incubation_aft <- readRDS(here("assets/incubation_aft_median.rds"))
+latent_aft <- readRDS(here("assets/latent_aft_median.rds"))  
 
-Plot median phases  
+incu_grps <- incubation_aft 
+latent_grps <- latent_aft[,3:8]
+
+subclin_grps <- incu_grps %>%
+  inner_join(latent_grps, by = "Group", suffix = c("_incu", "_latent")) %>%
+  mutate(
+    Q_0.025 = Q_0.025_incu - Q_0.025_latent,
+    Q_0.25  = Q_0.25_incu - Q_0.25_latent,
+    Q_0.5   = Q_0.5_incu - Q_0.5_latent,
+    Q_0.75  = Q_0.75_incu - Q_0.75_latent,
+    Q_0.975 = Q_0.975_incu - Q_0.975_latent,
+    Phase = "Subclinical"
+  ) %>%
+  select(Phase, Group, Q_0.025, Q_0.25, Q_0.5, Q_0.75, Q_0.975)
+
+subclin_grps
+
+incu_grps$Phase <- "Incubation" 
+latent_grps$Phase <- "Latent"
+  
+all_grps_w <- rbind(latent_grps, incu_grps, subclin_grps)
+
+```
+
+Plot study-wide median phases  
 ```{r fig.width=8, fig.height=6}
 plot_median_phases(medians_df)
 ```
 
-Plot subclinical curve.  
-```{r fig.width=8, fig.height=6}
+Plot subclinical curve based on study-wide rates.    
+```{r fig.width=8, fig.height=8}
 plot_compare_marginals(incubation_samples, latent_samples)
 ```
-
+  
+Plot treatment-specific subclinical estimates from AFT models.
+```{r fig.width=8, fig.height=8}
+plot_group_phases(all_grps_w)
+```
+  
 
 
 

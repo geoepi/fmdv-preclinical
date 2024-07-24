@@ -2,7 +2,7 @@ compute_survival_marginals <- function(model, steps) {
 
   require(parallel)
   
-  # Set number of cores to use
+  # number of cores
   options(mc.cores = 4)
   
   # time sequence
@@ -18,7 +18,6 @@ compute_survival_marginals <- function(model, steps) {
     return(unlist(S.stats[c("quant0.025", "quant0.25", "quant0.5", "quant0.75", "quant0.975")]))
   })
   
-  # Convert to a data frame
   S.inla <- as.data.frame(do.call(rbind, S.inla))
   S.inla$time_vect <- times
   

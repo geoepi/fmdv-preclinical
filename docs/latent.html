@@ -198,12 +198,11 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
    
   <ul class="collapse">
   <li><a href="#shedding-threshold" id="toc-shedding-threshold" class="nav-link active" data-scroll-target="#shedding-threshold">Shedding Threshold</a></li>
-  <li><a href="#scale-time" id="toc-scale-time" class="nav-link" data-scroll-target="#scale-time">Scale Time</a></li>
-  <li><a href="#scale-serum" id="toc-scale-serum" class="nav-link" data-scroll-target="#scale-serum">Scale Serum</a></li>
-  <li><a href="#response-variable" id="toc-response-variable" class="nav-link" data-scroll-target="#response-variable">Response Variable</a></li>
-  <li><a href="#survival-model" id="toc-survival-model" class="nav-link" data-scroll-target="#survival-model">Survival Model</a></li>
+  <li><a href="#prepare-data" id="toc-prepare-data" class="nav-link" data-scroll-target="#prepare-data">Prepare Data</a></li>
+  <li><a href="#models" id="toc-models" class="nav-link" data-scroll-target="#models">Models</a></li>
   <li><a href="#sample-marginals" id="toc-sample-marginals" class="nav-link" data-scroll-target="#sample-marginals">Sample Marginals</a></li>
   <li><a href="#survival-curve" id="toc-survival-curve" class="nav-link" data-scroll-target="#survival-curve">Survival Curve</a></li>
+  <li><a href="#aft-treament-effects" id="toc-aft-treament-effects" class="nav-link" data-scroll-target="#aft-treament-effects">AFT Treament Effects</a></li>
   </ul>
 </nav>
     </div>
@@ -315,19 +314,16 @@ pre {
 </div>
 </div>
 </section>
-<section id="scale-time" class="level2">
-<h2 class="anchored" data-anchor-id="scale-time">Scale Time</h2>
-<p>Add an arbitrarily small value to eliminate zeros. Really not need with his specific data set, by an important step.</p>
+<section id="prepare-data" class="level2">
+<h2 class="anchored" data-anchor-id="prepare-data">Prepare Data</h2>
+<p>Scale Time Add an arbitrarily small value to eliminate zeros. Really not need with his specific data set, by an important step.</p>
 <div class="cell">
 <details open="">
 <summary>Hide code</summary>
 <div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>latent_end_df<span class="sc">$</span>scaled_duration <span class="ot">&lt;-</span> latent_end_df<span class="sc">$</span>dpe <span class="sc">+</span> <span class="fl">0.0001</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
-</section>
-<section id="scale-serum" class="level2">
-<h2 class="anchored" data-anchor-id="scale-serum">Scale Serum</h2>
-<p>Scaling serum as potential covariate.</p>
+<p>Scale Serum Scaling serum as potential covariate.</p>
 <div class="cell">
 <details open="">
 <summary>Hide code</summary>
@@ -337,18 +333,20 @@ pre {
 </details>
 </div>
 </section>
-<section id="response-variable" class="level2">
-<h2 class="anchored" data-anchor-id="response-variable">Response Variable</h2>
-<p>Creating a survival object to ensure time and censored animals are correctly indicated.</p>
+<section id="models" class="level2">
+<h2 class="anchored" data-anchor-id="models">Models</h2>
+<p>Response Variable Creating a survival object to ensure time and censored animals are correctly indicated.</p>
 <div class="cell">
 <details open="">
 <summary>Hide code</summary>
 <div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>surv_obj <span class="ot">&lt;-</span> <span class="fu">inla.surv</span>(latent_end_df<span class="sc">$</span>scaled_duration, latent_end_df<span class="sc">$</span>latent_end)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
-</section>
-<section id="survival-model" class="level2">
-<h2 class="anchored" data-anchor-id="survival-model">Survival Model</h2>
+<div class="panel-tabset">
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-1-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-1" role="tab" aria-controls="tabset-1-1" aria-selected="true">Parametric Suvival</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-2" role="tab" aria-controls="tabset-1-2" aria-selected="false">Accelerated Failure Time (AFT)</a></li></ul>
+<div class="tab-content">
+<div id="tabset-1-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-1-1-tab">
+<p>Parametric model for study-wide average duration.</p>
 <div class="cell">
 <details open="">
 <summary>Hide code</summary>
@@ -363,6 +361,33 @@ pre {
 <span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>                        <span class="at">control.compute=</span><span class="fu">list</span>(<span class="at">dic =</span> <span class="cn">TRUE</span>, <span class="at">cpo =</span> <span class="cn">FALSE</span>, <span class="at">waic =</span> <span class="cn">TRUE</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
+</div>
+<div id="tabset-1-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-2-tab">
+<p>Treatment is specific to <code>group</code> therefore using <code>group</code> below to identify important differences.</p>
+<div class="cell">
+<details open="">
+<summary>Hide code</summary>
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>return_quants <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="fl">0.025</span>, <span class="fl">0.05</span>, <span class="fl">0.25</span>, <span class="fl">0.5</span>, <span class="fl">0.75</span>, <span class="fl">0.95</span>, <span class="fl">0.975</span>)</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>pc_prec_iid <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">theta =</span> <span class="fu">list</span>(<span class="at">prior=</span><span class="st">"pc.prec"</span>, </span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>                                 <span class="at">param=</span><span class="fu">c</span>(<span class="dv">1</span>, <span class="fl">0.001</span>)))</span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>latent_aft_mod <span class="ot">&lt;-</span> <span class="fu">inla</span>(surv_obj <span class="sc">~</span> <span class="dv">1</span> <span class="sc">+</span></span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>                       <span class="fu">f</span>(group,</span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>                           <span class="at">model =</span> <span class="st">"iid"</span>,</span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>                           <span class="at">constr=</span><span class="cn">FALSE</span>,</span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>                           <span class="at">hyper=</span>pc_prec_iid),</span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>                        <span class="at">data =</span> latent_end_df, </span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>                        <span class="at">verbose=</span><span class="cn">FALSE</span>,</span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a>                        <span class="at">quantiles =</span> return_quants,</span>
+<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a>                        <span class="at">family =</span> <span class="st">"lognormal.surv"</span>,</span>
+<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a>                        <span class="at">control.fixed =</span> <span class="fu">list</span>(<span class="at">prec =</span> <span class="dv">1</span>, <span class="at">prec.intercept  =</span> <span class="fl">0.0001</span>),</span>
+<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a>                        <span class="at">control.compute=</span><span class="fu">list</span>(<span class="at">dic =</span> <span class="cn">TRUE</span>, <span class="at">cpo =</span> <span class="cn">FALSE</span>, <span class="at">waic =</span> <span class="cn">TRUE</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+</div>
+</div>
+</div>
 </section>
 <section id="sample-marginals" class="level2">
 <h2 class="anchored" data-anchor-id="sample-marginals">Sample Marginals</h2>
@@ -370,15 +395,15 @@ pre {
 <div class="cell">
 <details open="">
 <summary>Hide code</summary>
-<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>latent_samples <span class="ot">&lt;-</span> <span class="fu">compute_survival_marginals</span>(latent_end_mod, <span class="dv">5</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>latent_samples <span class="ot">&lt;-</span> <span class="fu">compute_survival_marginals</span>(latent_end_mod, <span class="dv">5</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 <p>Check estimates at the 0.5 probability (median)</p>
 <div class="cell">
 <details open="">
 <summary>Hide code</summary>
-<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>median_latent <span class="ot">&lt;-</span> <span class="fu">find_closest_quant</span>(latent_samples, <span class="fl">0.5</span>)</span>
-<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>median_latent</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>median_latent <span class="ot">&lt;-</span> <span class="fu">find_closest_quant</span>(latent_samples, <span class="fl">0.5</span>)</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>median_latent</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>$quant0.025
@@ -403,18 +428,133 @@ $quant0.975
 <div class="cell">
 <details open="">
 <summary>Hide code</summary>
-<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_survival_marginals</span>(latent_samples, <span class="at">x_max =</span> <span class="dv">5</span>, <span class="at">xlabel =</span> <span class="st">"Latent Phase Duration"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_survival_marginals</span>(latent_samples, <span class="at">x_max =</span> <span class="dv">5</span>, <span class="at">xlabel =</span> <span class="st">"Latent Phase Duration"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
-<p><img src="latent_files/figure-html/unnamed-chunk-11-1.png" class="img-fluid" width="768"></p>
+<p><img src="latent_files/figure-html/unnamed-chunk-12-1.png" class="img-fluid" width="768"></p>
+</div>
+</div>
+</section>
+<section id="aft-treament-effects" class="level2">
+<h2 class="anchored" data-anchor-id="aft-treament-effects">AFT Treament Effects</h2>
+<p>Get treatment-level estimated duration</p>
+<div class="cell">
+<details open="">
+<summary>Hide code</summary>
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>aft_latent <span class="ot">&lt;-</span> latent_aft_mod<span class="sc">$</span>summary.random<span class="sc">$</span>group[,<span class="fu">c</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">4</span>,<span class="dv">6</span>,<span class="dv">7</span>,<span class="dv">8</span>, <span class="dv">10</span>)]</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(aft_latent) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"Group"</span>,<span class="st">"Mean"</span>, <span class="st">"sd"</span>, <span class="st">"Q_0.025"</span>,<span class="st">"Q_0.25"</span>, <span class="st">"Q_0.5"</span>, <span class="st">"Q_0.75"</span>, <span class="st">"Q_0.975"</span>)</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>mean_aft <span class="ot">&lt;-</span> latent_aft_mod<span class="sc">$</span>summary.fixed<span class="sc">$</span>mean</span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>aft_latent[,<span class="dv">2</span><span class="sc">:</span><span class="dv">8</span>] <span class="ot">&lt;-</span> <span class="fu">exp</span>(aft_latent[,<span class="dv">2</span><span class="sc">:</span><span class="dv">8</span>] <span class="sc">+</span> mean_aft)</span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>study_wide <span class="ot">&lt;-</span> <span class="fu">exp</span>(latent_aft_mod<span class="sc">$</span>summary.fixed[,<span class="fu">c</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>, <span class="dv">5</span><span class="sc">:</span><span class="dv">7</span>, <span class="dv">9</span>)])</span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a><span class="fu">rownames</span>(study_wide) <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(study_wide) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"Mean"</span>, <span class="st">"sd"</span>, <span class="st">"Q_0.025"</span>,<span class="st">"Q_0.25"</span>, <span class="st">"Q_0.5"</span>, <span class="st">"Q_0.75"</span>, <span class="st">"Q_0.975"</span>)</span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a>study_wide<span class="sc">$</span>Group <span class="ot">&lt;-</span> <span class="st">"study"</span></span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a>aft_latent <span class="ot">&lt;-</span> <span class="fu">rbind</span>(study_wide, aft_latent)</span>
+<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a>aft_latent</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<div class="kable-table">
+<table class="table table-sm table-striped">
+<colgroup>
+<col style="width: 12%">
+<col style="width: 12%">
+<col style="width: 13%">
+<col style="width: 12%">
+<col style="width: 12%">
+<col style="width: 12%">
+<col style="width: 12%">
+<col style="width: 11%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: right;">Mean</th>
+<th style="text-align: right;">sd</th>
+<th style="text-align: right;">Q_0.025</th>
+<th style="text-align: right;">Q_0.25</th>
+<th style="text-align: right;">Q_0.5</th>
+<th style="text-align: right;">Q_0.75</th>
+<th style="text-align: right;">Q_0.975</th>
+<th style="text-align: left;">Group</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">1.270207</td>
+<td style="text-align: right;">1.173833</td>
+<td style="text-align: right;">0.9259857</td>
+<td style="text-align: right;">1.148989</td>
+<td style="text-align: right;">1.268414</td>
+<td style="text-align: right;">1.401915</td>
+<td style="text-align: right;">1.757435</td>
+<td style="text-align: left;">study</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">1.381136</td>
+<td style="text-align: right;">1.517493</td>
+<td style="text-align: right;">1.0116252</td>
+<td style="text-align: right;">1.247324</td>
+<td style="text-align: right;">1.329053</td>
+<td style="text-align: right;">1.515215</td>
+<td style="text-align: right;">2.099118</td>
+<td style="text-align: left;">donor</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">1.420993</td>
+<td style="text-align: right;">1.509849</td>
+<td style="text-align: right;">1.0590048</td>
+<td style="text-align: right;">1.269587</td>
+<td style="text-align: right;">1.378708</td>
+<td style="text-align: right;">1.568838</td>
+<td style="text-align: right;">2.110296</td>
+<td style="text-align: left;">Group 2</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">1.149395</td>
+<td style="text-align: right;">1.507885</td>
+<td style="text-align: right;">0.7736175</td>
+<td style="text-align: right;">1.044813</td>
+<td style="text-align: right;">1.185920</td>
+<td style="text-align: right;">1.278711</td>
+<td style="text-align: right;">1.545068</td>
+<td style="text-align: left;">Group 3</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">1.149395</td>
+<td style="text-align: right;">1.507885</td>
+<td style="text-align: right;">0.7736175</td>
+<td style="text-align: right;">1.044813</td>
+<td style="text-align: right;">1.185920</td>
+<td style="text-align: right;">1.278711</td>
+<td style="text-align: right;">1.545068</td>
+<td style="text-align: left;">Group 4</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<p>Compare treatment groups</p>
+<div class="cell">
+<details open="">
+<summary>Hide code</summary>
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_aft_linerange</span>(latent_aft_mod, <span class="at">y_min =</span> <span class="dv">0</span>, <span class="at">y_max =</span> <span class="fl">2.5</span>, <span class="at">brks =</span> <span class="fl">0.5</span>, <span class="at">ylimit =</span> <span class="fl">2.5</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: Using `size` aesthetic for lines was deprecated in ggplot2 3.4.0.
+ℹ Please use `linewidth` instead.</code></pre>
+</div>
+<div class="cell-output-display">
+<p><img src="latent_files/figure-html/unnamed-chunk-14-1.png" class="img-fluid" width="768"></p>
 </div>
 </div>
 <p>save latent samples</p>
 <div class="cell">
 <details open="">
 <summary>Hide code</summary>
-<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(latent_samples, <span class="fu">here</span>(<span class="st">"assets/latent_samples.rds"</span>))</span>
-<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(median_latent, <span class="fu">here</span>(<span class="st">"assets/latent_median.rds"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(latent_samples, <span class="fu">here</span>(<span class="st">"assets/latent_samples.rds"</span>))</span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(median_latent, <span class="fu">here</span>(<span class="st">"assets/latent_median.rds"</span>))</span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(aft_latent, <span class="fu">here</span>(<span class="st">"assets/latent_aft_median.rds"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 

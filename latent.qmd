@@ -91,27 +91,33 @@ latent_end_df %>%
             max_range = max(dpe))
 ```
   
-## Scale Time
+## Prepare Data  
+
+Scale Time
 Add an arbitrarily small value to eliminate zeros.  Really not need with his specific data set, by an important step.  
 ```{r}
 latent_end_df$scaled_duration <- latent_end_df$dpe + 0.0001
 ```
   
-## Scale Serum
+Scale Serum
 Scaling serum as potential covariate.   
 ```{r}
 latent_end_df$serum_0 <- latent_end_df$serum
 latent_end_df$serum_0[latent_end_df$serum_0 == 45] = 0
 latent_end_df$serum_0 <- as.numeric(scale(latent_end_df$serum_0, scale = T, center = F))
 ```
-
-## Response Variable
+  
+## Models  
+  
+Response Variable
 Creating a survival object to ensure time and censored animals are correctly indicated.
 ```{r}
 surv_obj <- inla.surv(latent_end_df$scaled_duration, latent_end_df$latent_end)
 ```
-
-## Survival Model
+  
+::: panel-tabset  
+## Parametric Suvival  
+Parametric model for study-wide average duration.
 ```{r}
 return_quants <- c(0.025, 0.05, 0.25, 0.5, 0.75, 0.95, 0.975)
 
@@ -125,6 +131,30 @@ latent_end_mod <- inla(surv_obj ~ 1 + serum_0,
 
 ```
 
+
+## Accelerated Failure Time (AFT)  
+Treatment is specific to `group` therefore using `group` below to identify important differences.    
+```{r}
+return_quants <- c(0.025, 0.05, 0.25, 0.5, 0.75, 0.95, 0.975)
+
+pc_prec_iid <- list(theta = list(prior="pc.prec", 
+                                 param=c(1, 0.001)))
+
+latent_aft_mod <- inla(surv_obj ~ 1 +
+                       f(group,
+                           model = "iid",
+                           constr=FALSE,
+                           hyper=pc_prec_iid),
+                        data = latent_end_df, 
+                        verbose=FALSE,
+                        quantiles = return_quants,
+                        family = "lognormal.surv",
+                        control.fixed = list(prec = 1, prec.intercept  = 0.0001),
+                        control.compute=list(dic = TRUE, cpo = FALSE, waic = TRUE))
+```
+:::
+
+  
 ## Sample Marginals
 Performing sampling on the model results
 ```{r}
@@ -142,8 +172,31 @@ median_latent
 plot_survival_marginals(latent_samples, x_max = 5, xlabel = "Latent Phase Duration")
 ```
   
+## AFT Treament Effects 
+Get treatment-level estimated duration
+```{r}
+aft_latent <- latent_aft_mod$summary.random$group[,c(1:4,6,7,8, 10)]
+names(aft_latent) <- c("Group","Mean", "sd", "Q_0.025","Q_0.25", "Q_0.5", "Q_0.75", "Q_0.975")
+mean_aft <- latent_aft_mod$summary.fixed$mean
+
+aft_latent[,2:8] <- exp(aft_latent[,2:8] + mean_aft)
+study_wide <- exp(latent_aft_mod$summary.fixed[,c(1:3, 5:7, 9)])
+rownames(study_wide) <- NULL
+names(study_wide) <- c("Mean", "sd", "Q_0.025","Q_0.25", "Q_0.5", "Q_0.75", "Q_0.975")
+study_wide$Group <- "study"
+aft_latent <- rbind(study_wide, aft_latent)
+aft_latent
+```
+  
+Compare treatment groups  
+```{r fig.width=8, fig.height=6}
+plot_aft_linerange(latent_aft_mod, y_min = 0, y_max = 2.5, brks = 0.5, ylimit = 2.5)
+```
+
+  
 save latent samples
 ```{r eval=FALSE}
 saveRDS(latent_samples, here("assets/latent_samples.rds"))
 saveRDS(median_latent, here("assets/latent_median.rds"))
+saveRDS(aft_latent, here("assets/latent_aft_median.rds"))
 ```
