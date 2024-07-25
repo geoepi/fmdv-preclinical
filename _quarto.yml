@@ -6,8 +6,6 @@ website:
   title: "FMDV Preclinical"
   navbar:
     left:
-      - href: index.qmd
-        text: Overview
       - href: preprocess.qmd
         text: Preprocessing 
       - href: incubation.qmd
@@ -20,6 +18,8 @@ website:
         text: Fractional
       - href: longitudinal.qmd
         text: Longitudinal
+      - href: compartmental.qmd
+        text: Simulation
     right:
       - href: https://geoepi.github.io/
         text: GeoEpi

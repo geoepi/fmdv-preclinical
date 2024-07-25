@@ -36,6 +36,6 @@ pre {
 ::: {.callout-important icon=true}
 #### Under Active Development  
 
-This site includes exploratory analyses, has not been verified, and is subject to change.  
+This site includes exploratory analyses that have not been verified or validated and are subject to change.  
   
 ::: 

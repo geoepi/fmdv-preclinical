@@ -1,0 +1,107 @@
+---
+title: "Compartmental Models"
+description: "Scenario-based simulation to compare estimated latent, subclinical, and incubation rates."
+format:
+  html: 
+    df-print: kable
+    code-fold: show
+    code-summary: "Hide code"
+    code-overflow: wrap
+    toc-title: Page Contents
+    toc: true
+    toc-depth: 2
+    toc-location: right
+    number-sections: false
+    html-math-method: katex
+    smooth-scroll: true
+editor: source
+editor_options: 
+  chunk_output_type: console
+---
+```{=html}
+<style type="text/css">
+
+body, td {
+   font-size: 13pt;
+}
+code.r{
+  font-size: 9pt;
+}
+pre {
+  font-size: 11pt
+}
+</style>
+```
+
+```{r, warning=FALSE, message=FALSE, echo=FALSE}
+library(tidyverse)
+options(dplyr.summarise.inform = FALSE)
+
+library(deSolve)
+library(INLA)
+library(here)
+library(pals)
+
+## Custom Functions
+source(here("R/utilities.R"))
+source_dir(here("R"))
+```
+::: {.callout-important icon=true}
+#### Under Construction 
+
+Work in progress!    
+  
+:::
+
+
+## SEIIR Model  
+Basic model
+```{r}
+seiir_model <- function(times, state, parameters) {
+  with(as.list(c(state, parameters)), {
+    
+    dS <- -beta * S * (I_sub + I_clin) / N
+    dE <- beta * S * (I_sub + I_clin) / N - sigma * E
+    dI_sub <- sigma * E - lambda * I_sub
+    dI_clin <- lambda * I_sub - gamma_clin * I_clin
+    dR <- gamma_clin * I_clin
+    
+    list(c(dS, dE, dI_sub, dI_clin, dR))
+  })
+}
+
+# initial values
+initial_state <- c(
+  S = 999,
+  E = 1,
+  I_sub = 0,
+  I_clin = 0,
+  R = 0
+)
+
+# get estimates
+subclinical_w <- readRDS(here("assets/subclinical_w.rds")) 
+
+# sampling distributions
+param_distributions <- list(
+  beta_meanlog = log(0.3), beta_sdlog = 0.1, #  ??
+  sigma_meanlog = log(1/1.3290530), sigma_sdlog = 0.1, # study average per AFT
+  lambda_meanlog = log(1/2.4793733), lambda_sdlog = 0.1, # study average per AFT
+  gamma_clin_meanlog = log(1/10.8), gamma_clin_sdlog = 0.1, # Shankar's 2019
+  N = 1000 #herd size
+)
+```
+
+## Run Simulation
+```{r}
+summarized_results <- simulate_SEIIR(seiir_model,
+                                     distrib,
+                                     initial_state,
+                                     n_iterations = 1000,
+                                     timesteps = 200)
+```
+  
+Plot dynamics  
+```{r fig.width=8, fig.height=6}
+plot_seiir_dynamics(summarized_results, legend_title = " ")
+```

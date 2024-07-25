@@ -144,10 +144,6 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
           <div class="collapse navbar-collapse" id="navbarCollapse">
             <ul class="navbar-nav navbar-nav-scroll me-auto">
   <li class="nav-item">
-    <a class="nav-link" href="./index.html">
- <span class="menu-text">Overview</span></a>
-  </li>  
-  <li class="nav-item">
     <a class="nav-link" href="./preprocess.html">
  <span class="menu-text">Preprocessing</span></a>
   </li>  
@@ -170,6 +166,10 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
   <li class="nav-item">
     <a class="nav-link" href="./longitudinal.html">
  <span class="menu-text">Longitudinal</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./compartmental.html">
+ <span class="menu-text">Simulation</span></a>
   </li>  
 </ul>
             <ul class="navbar-nav navbar-nav-scroll ms-auto">
@@ -447,6 +447,13 @@ pre {
 <div class="cell-output-display">
 <p><img src="subclinical_files/figure-html/unnamed-chunk-6-1.png" class="img-fluid" width="768"></p>
 </div>
+</div>
+<p>save subclinical estimates</p>
+<div class="cell">
+<details open="">
+<summary>Hide code</summary>
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(all_grps_w, <span class="fu">here</span>(<span class="st">"assets/subclinical_w.rds"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 </div>
 
 

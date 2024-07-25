@@ -130,7 +130,11 @@ Plot treatment-specific subclinical estimates from AFT models.
 ```{r fig.width=8, fig.height=8}
 plot_group_phases(all_grps_w)
 ```
-  
+
+save subclinical estimates
+```{r eval=FALSE}
+saveRDS(all_grps_w, here("assets/subclinical_w.rds"))
+```
 
 
 
