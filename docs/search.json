@@ -319,6 +319,6 @@
     "href": "compartmental.html#run-simulation",
     "title": "Compartmental Models",
     "section": "Run Simulation",
-    "text": "Run Simulation\n\n\nHide code\nsummarized_results <- simulate_SEIIR(seiir_model,\n                                     distrib,\n                                     initial_state,\n                                     n_iterations = 1000,\n                                     timesteps = 200)\n\n\nPlot dynamics\n\n\nHide code\nplot_seiir_dynamics(summarized_results, legend_title = \" \")\n\n\nWarning: Using `size` aesthetic for lines was deprecated in ggplot2 3.4.0.\nℹ Please use `linewidth` instead.\n\n\nWarning in geom_line(linewdith = 1): Ignoring unknown parameters: `linewdith`"
+    "text": "Run Simulation\n\n\nHide code\nsummarized_results <- simulate_SEIIR(seiir_model,\n                                     distrib,\n                                     initial_state,\n                                     n_iterations = 1000,\n                                     timesteps = 200)\n\n\nPlot dynamics\n\n\nHide code\nplot_seiir_dynamics(summarized_results, legend_title = \" \")"
   }
 ]

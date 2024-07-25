@@ -13,10 +13,10 @@ plot_seiir_dynamics <- function(summarized_results,
   #geom_bar(data=my_truth, aes(date, rescaled_count), stat="identity", alpha=0.3, 
   #         inherit.aes=FALSE, color="transparent", fill="gray50", width=1) +
   geom_ribbon(aes(ymin = Q_0.025, ymax = Q_0.975, group=compartment, fill=compartment), 
-              size=0.01, color="transparent", alpha = 0.2) +
+              linewidth=0.01, color="transparent", alpha = 0.2) +
   geom_ribbon(aes(ymin = Q_0.25, ymax = Q_0.75, group=compartment, fill=compartment), 
-              size=0.01, color="transparent", alpha = 0.4) +
-  geom_line(linewdith = 1.0) +
+              linewidth=0.01, color="transparent", alpha = 0.4) +
+  geom_line(linewidth = 1.0) +
   #scale_x_date(date_breaks = "45 day", date_labels = "%b %d") +
   #scale_y_continuous(sec.axis = sec_axis(~ . / scaling_factor, name = " "), limits = ylimits) +
   scale_colour_manual(values = c("gray60", "#1F78B4", "#B15928", "#E31A1C", "#33A02C")) +
