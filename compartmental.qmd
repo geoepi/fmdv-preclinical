@@ -59,14 +59,17 @@ Basic model
 ```{r}
 seiir_model <- function(times, state, parameters) {
   with(as.list(c(state, parameters)), {
-    
+
     dS <- -beta * S * (I_sub + I_clin) / N
     dE <- beta * S * (I_sub + I_clin) / N - sigma * E
-    dI_sub <- sigma * E - lambda * I_sub
-    dI_clin <- lambda * I_sub - gamma_clin * I_clin
+    dI_sub <- p_sub * sigma * E - lambda * I_sub
+    dI_clin <- (1 - p_sub) * sigma * E + lambda * I_sub - gamma_clin * I_clin
     dR <- gamma_clin * I_clin
     
-    list(c(dS, dE, dI_sub, dI_clin, dR))
+    sub_inc <- p_sub * sigma * E
+    clin_inc <- (1 - p_sub) * sigma * E + lambda * I_sub
+
+    list(c(dS, dE, dI_sub, dI_clin, dR), sub_inc = sub_inc, clin_inc = clin_inc)
   })
 }
 
@@ -79,29 +82,124 @@ initial_state <- c(
   R = 0
 )
 
-# get estimates
-subclinical_w <- readRDS(here("assets/subclinical_w.rds")) 
-
 # sampling distributions
 param_distributions <- list(
-  beta_meanlog = log(0.3), beta_sdlog = 0.1, #  ??
+  beta_meanlog = log(0.3), beta_sdlog = 0.1, # ??
   sigma_meanlog = log(1/1.3290530), sigma_sdlog = 0.1, # study average per AFT
   lambda_meanlog = log(1/2.4793733), lambda_sdlog = 0.1, # study average per AFT
   gamma_clin_meanlog = log(1/10.8), gamma_clin_sdlog = 0.1, # Shankar's 2019
-  N = 1000 #herd size
+  p_sub_shape1 = 10, p_sub_shape2 = 5, # prob of I_sub -> I_clin ~0.68-0.75
+  N = 1000 # herd size
 )
 ```
 
 ## Run Simulation
 ```{r}
-summarized_results <- simulate_SEIIR(seiir_model,
-                                     distrib,
-                                     initial_state,
-                                     n_iterations = 1000,
-                                     timesteps = 200)
+full_results <- simulate_SEIIR_intervention(seiir_model,
+                                            param_distributions,
+                                            initial_state,
+                                            n_iterations = 1000,
+                                            timesteps = 200)
 ```
   
 Plot dynamics  
 ```{r fig.width=8, fig.height=6}
-plot_seiir_dynamics(summarized_results, legend_title = " ")
+plot_seiir_dynamics(full_results$summary, plot_title = "Burn Through")
 ```
+  
+Plot incidence
+```{r fig.width=8, fig.height=6}
+ratio_out <- calculate_ratio_subclinical(full_results$summary)
+ratio_out$total[2]/ratio_out$total[1]
+
+plot_incidence_bar(full_results$summary)
+```
+
+
+
+## Simulation with Intervention  
+```{r}
+interv_results <- simulate_SEIIR_intervention(seiir_model,
+                                              param_distributions,
+                                              initial_state,
+                                              n_iterations = 1000,
+                                              timesteps = 200,
+                                              detect = 3, # when clinical cases >= detect, 3 per Backer 2012
+                                              vacc_effect = 0.20, # effectiveness
+                                              immune_param = c(7, 1) # mean and sd for delay before immunity
+                                              )
+```
+
+Time of intervention
+```{r}
+interv_time <- interv_results$all_results %>%
+  filter(I_clin >= 3) %>%
+  slice_head(n = 1) %>%
+  pull(time)
+
+interv_time
+```
+  
+Plot intervention dynamics  
+```{r fig.width=8, fig.height=6}
+plot_seiir_dynamics(interv_results$summary, plot_title = "Intervention", vline=interv_time)
+```
+
+Plot incidence
+```{r fig.width=8, fig.height=6}
+ratio_out <- calculate_ratio_subclinical(interv_results$summary)
+ratio_out$total[2]/ratio_out$total[1]
+
+plot_incidence_bar(interv_results$summary)
+```
+
+
+```{r eval=FALSE, echo=FALSE}
+subclinical_w <- readRDS(here("assets/subclinical_w.rds")) %>%
+  filter(Phase != "Incubation") %>%
+  mutate(med = Q_0.5) %>%
+  select(med, Group, Phase)
+
+results_out <- subclinical_w %>%
+  mutate(clin_inc = NA,
+         sub_inc = NA,
+         ratio = NA)
+
+for(i in 1:5){
+  
+  param_distributions <- list(
+  beta_meanlog = log(0.3), beta_sdlog = 0.1,
+  sigma_meanlog = log(1/subclinical_w[i, "med"]), sigma_sdlog = 0.1, 
+  lambda_meanlog = log(1/subclinical_w[i + 5, "med"]), lambda_sdlog = 0.1,
+  gamma_clin_meanlog = log(1/10.8), gamma_clin_sdlog = 0.1, 
+  p_sub_shape1 = 10, p_sub_shape2 = 5,
+  N = 1000 
+)
+  
+  iter_results <- simulate_SEIIR_intervention(seiir_model,
+                                              param_distributions,
+                                              initial_state,
+                                              n_iterations = 1000,
+                                              timesteps = 200,
+                                              detect = 3,
+                                              vacc_effect = 1,
+                                              immune_param = c(7, 1))
+  
+  ratio_out <- calculate_ratio_subclinical(iter_results$summary)
+  
+  results_out[i, "clin_inc"] <- ratio_out$total[1]
+  results_out[i, "sub_inc"] <- ratio_out$total[2]
+  results_out[i, "ratio"] <- ratio_out$total[2]/ratio_out$total[1]
+  results_out[i+5, "clin_inc"] <- ratio_out$total[1]
+  results_out[i+5, "sub_inc"] <- ratio_out$total[2]
+  results_out[i+5, "ratio"] <- ratio_out$total[2]/ratio_out$total[1]
+}
+
+
+results_out
+```
+
+
+
+
+

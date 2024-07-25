@@ -1,11 +1,15 @@
-plot_seiir_dynamics <- function(summarized_results, 
+plot_seiir_dynamics <- function(df, 
                                ylimits = c(0, 22000),
                                legend_title = "Compartment",
+                               plot_title = " ", vline = NULL,
                                xlab = " ", ylab = " ") {
   
-  summarized_results$compartment <- factor(summarized_results$compartment, levels = c("S", "E", "I_sub", "I_clin", "R") )
+  df <- df %>%
+    filter(compartment %in% c("S", "E", "I_sub", "I_clin", "R"))
   
-  p <- ggplot(summarized_results, aes(time, Q_0.5, group=compartment, color=compartment)) +
+  df$compartment <- factor(df$compartment, levels = c("S", "E", "I_sub", "I_clin", "R") )
+  
+  p <- ggplot(df, aes(time, Q_0.5, group=compartment, color=compartment)) +
   #geom_vline(xintercept = as_date("2015-01-01"),
   #           linetype = "longdash",
   #           linewidth=0.7,
@@ -24,6 +28,7 @@ plot_seiir_dynamics <- function(summarized_results,
   labs(x = xlab, y = ylab, color = legend_title, fill = legend_title) +
   xlab(xlab) + 
   ylab(ylab) +
+  ggtitle(plot_title) +
   theme_bw() +
   # facet_wrap(~set, ncol=1, scales = "free_y") +
   theme(plot.margin = unit(c(2,0.5,2,0.5),"cm"),
@@ -41,6 +46,20 @@ plot_seiir_dynamics <- function(summarized_results,
                                    hjust=0.5, angle=0),
         axis.text.y = element_text(size=20, face="bold"),
         plot.title = element_text(size=22, face="bold"))
+  
+  if(is.null(vline) == FALSE){
+    
+    plot_build <- ggplot_build(p)
+    y_range <- plot_build$layout$panel_scales_y[[1]]$range$range
+    y_mid <- mean(y_range)
+    
+    p <- p + geom_vline(xintercept = vline,
+                       linetype = "longdash",
+                       linewidth=0.7,
+                       col="darkred") +
+      annotate("text", x = vline + 0.05, y = y_mid, label = "Intervention", angle = 90, 
+               vjust = -0.5, hjust = 1, color = "darkred")
+  }
   
   return(p)
 }

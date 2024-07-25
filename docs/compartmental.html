@@ -199,6 +199,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
   <ul class="collapse">
   <li><a href="#seiir-model" id="toc-seiir-model" class="nav-link active" data-scroll-target="#seiir-model">SEIIR Model</a></li>
   <li><a href="#run-simulation" id="toc-run-simulation" class="nav-link" data-scroll-target="#run-simulation">Run Simulation</a></li>
+  <li><a href="#simulation-with-intervention" id="toc-simulation-with-intervention" class="nav-link" data-scroll-target="#simulation-with-intervention">Simulation with Intervention</a></li>
   </ul>
 </nav>
     </div>
@@ -263,37 +264,38 @@ Under Construction
 <summary>Hide code</summary>
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>seiir_model <span class="ot">&lt;-</span> <span class="cf">function</span>(times, state, parameters) {</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">with</span>(<span class="fu">as.list</span>(<span class="fu">c</span>(state, parameters)), {</span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    dS <span class="ot">&lt;-</span> <span class="sc">-</span>beta <span class="sc">*</span> S <span class="sc">*</span> (I_sub <span class="sc">+</span> I_clin) <span class="sc">/</span> N</span>
 <span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    dE <span class="ot">&lt;-</span> beta <span class="sc">*</span> S <span class="sc">*</span> (I_sub <span class="sc">+</span> I_clin) <span class="sc">/</span> N <span class="sc">-</span> sigma <span class="sc">*</span> E</span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    dI_sub <span class="ot">&lt;-</span> sigma <span class="sc">*</span> E <span class="sc">-</span> lambda <span class="sc">*</span> I_sub</span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    dI_clin <span class="ot">&lt;-</span> lambda <span class="sc">*</span> I_sub <span class="sc">-</span> gamma_clin <span class="sc">*</span> I_clin</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    dI_sub <span class="ot">&lt;-</span> p_sub <span class="sc">*</span> sigma <span class="sc">*</span> E <span class="sc">-</span> lambda <span class="sc">*</span> I_sub</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    dI_clin <span class="ot">&lt;-</span> (<span class="dv">1</span> <span class="sc">-</span> p_sub) <span class="sc">*</span> sigma <span class="sc">*</span> E <span class="sc">+</span> lambda <span class="sc">*</span> I_sub <span class="sc">-</span> gamma_clin <span class="sc">*</span> I_clin</span>
 <span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    dR <span class="ot">&lt;-</span> gamma_clin <span class="sc">*</span> I_clin</span>
 <span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    </span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    <span class="fu">list</span>(<span class="fu">c</span>(dS, dE, dI_sub, dI_clin, dR))</span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>  })</span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="co"># initial values</span></span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>initial_state <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>  <span class="at">S =</span> <span class="dv">999</span>,</span>
-<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>  <span class="at">E =</span> <span class="dv">1</span>,</span>
-<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>  <span class="at">I_sub =</span> <span class="dv">0</span>,</span>
-<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>  <span class="at">I_clin =</span> <span class="dv">0</span>,</span>
-<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>  <span class="at">R =</span> <span class="dv">0</span></span>
-<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a><span class="co"># get estimates</span></span>
-<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>subclinical_w <span class="ot">&lt;-</span> <span class="fu">readRDS</span>(<span class="fu">here</span>(<span class="st">"assets/subclinical_w.rds"</span>)) </span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    sub_inc <span class="ot">&lt;-</span> p_sub <span class="sc">*</span> sigma <span class="sc">*</span> E</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>    clin_inc <span class="ot">&lt;-</span> (<span class="dv">1</span> <span class="sc">-</span> p_sub) <span class="sc">*</span> sigma <span class="sc">*</span> E <span class="sc">+</span> lambda <span class="sc">*</span> I_sub</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>    <span class="fu">list</span>(<span class="fu">c</span>(dS, dE, dI_sub, dI_clin, dR), <span class="at">sub_inc =</span> sub_inc, <span class="at">clin_inc =</span> clin_inc)</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>  })</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a><span class="co"># initial values</span></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>initial_state <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>  <span class="at">S =</span> <span class="dv">999</span>,</span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>  <span class="at">E =</span> <span class="dv">1</span>,</span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>  <span class="at">I_sub =</span> <span class="dv">0</span>,</span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>  <span class="at">I_clin =</span> <span class="dv">0</span>,</span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>  <span class="at">R =</span> <span class="dv">0</span></span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>)</span>
 <span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a><span class="co"># sampling distributions</span></span>
 <span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>param_distributions <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
-<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>  <span class="at">beta_meanlog =</span> <span class="fu">log</span>(<span class="fl">0.3</span>), <span class="at">beta_sdlog =</span> <span class="fl">0.1</span>, <span class="co">#  ??</span></span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>  <span class="at">beta_meanlog =</span> <span class="fu">log</span>(<span class="fl">0.3</span>), <span class="at">beta_sdlog =</span> <span class="fl">0.1</span>, <span class="co"># ??</span></span>
 <span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>  <span class="at">sigma_meanlog =</span> <span class="fu">log</span>(<span class="dv">1</span><span class="sc">/</span><span class="fl">1.3290530</span>), <span class="at">sigma_sdlog =</span> <span class="fl">0.1</span>, <span class="co"># study average per AFT</span></span>
 <span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>  <span class="at">lambda_meanlog =</span> <span class="fu">log</span>(<span class="dv">1</span><span class="sc">/</span><span class="fl">2.4793733</span>), <span class="at">lambda_sdlog =</span> <span class="fl">0.1</span>, <span class="co"># study average per AFT</span></span>
 <span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>  <span class="at">gamma_clin_meanlog =</span> <span class="fu">log</span>(<span class="dv">1</span><span class="sc">/</span><span class="fl">10.8</span>), <span class="at">gamma_clin_sdlog =</span> <span class="fl">0.1</span>, <span class="co"># Shankar's 2019</span></span>
-<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>  <span class="at">N =</span> <span class="dv">1000</span> <span class="co">#herd size</span></span>
-<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>  <span class="at">p_sub_shape1 =</span> <span class="dv">10</span>, <span class="at">p_sub_shape2 =</span> <span class="dv">5</span>, <span class="co"># prob of I_sub -&gt; I_clin ~0.68-0.75</span></span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>  <span class="at">N =</span> <span class="dv">1000</span> <span class="co"># herd size</span></span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 </section>
@@ -302,22 +304,103 @@ Under Construction
 <div class="cell">
 <details open="">
 <summary>Hide code</summary>
-<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>summarized_results <span class="ot">&lt;-</span> <span class="fu">simulate_SEIIR</span>(seiir_model,</span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>                                     distrib,</span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>                                     initial_state,</span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>                                     <span class="at">n_iterations =</span> <span class="dv">1000</span>,</span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>                                     <span class="at">timesteps =</span> <span class="dv">200</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>full_results <span class="ot">&lt;-</span> <span class="fu">simulate_SEIIR_intervention</span>(seiir_model,</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>                                            param_distributions,</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>                                            initial_state,</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>                                            <span class="at">n_iterations =</span> <span class="dv">1000</span>,</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>                                            <span class="at">timesteps =</span> <span class="dv">200</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 <p>Plot dynamics</p>
 <div class="cell">
 <details open="">
 <summary>Hide code</summary>
-<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_seiir_dynamics</span>(summarized_results, <span class="at">legend_title =</span> <span class="st">" "</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_seiir_dynamics</span>(full_results<span class="sc">$</span>summary, <span class="at">plot_title =</span> <span class="st">"Burn Through"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
 <p><img src="compartmental_files/figure-html/unnamed-chunk-4-1.png" class="img-fluid" width="768"></p>
 </div>
+</div>
+<p>Plot incidence</p>
+<div class="cell">
+<details open="">
+<summary>Hide code</summary>
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>ratio_out <span class="ot">&lt;-</span> <span class="fu">calculate_ratio_subclinical</span>(full_results<span class="sc">$</span>summary)</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>ratio_out<span class="sc">$</span>total[<span class="dv">2</span>]<span class="sc">/</span>ratio_out<span class="sc">$</span>total[<span class="dv">1</span>]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 0.6383648</code></pre>
+</div>
+<details open="">
+<summary>Hide code</summary>
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_incidence_bar</span>(full_results<span class="sc">$</span>summary)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<p><img src="compartmental_files/figure-html/unnamed-chunk-5-1.png" class="img-fluid" width="768"></p>
+</div>
+</div>
+</section>
+<section id="simulation-with-intervention" class="level2">
+<h2 class="anchored" data-anchor-id="simulation-with-intervention">Simulation with Intervention</h2>
+<div class="cell">
+<details open="">
+<summary>Hide code</summary>
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>interv_results <span class="ot">&lt;-</span> <span class="fu">simulate_SEIIR_intervention</span>(seiir_model,</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>                                              param_distributions,</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>                                              initial_state,</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>                                              <span class="at">n_iterations =</span> <span class="dv">1000</span>,</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>                                              <span class="at">timesteps =</span> <span class="dv">200</span>,</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>                                              <span class="at">detect =</span> <span class="dv">3</span>, <span class="co"># when clinical cases &gt;= detect, 3 per Backer 2012</span></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>                                              <span class="at">vacc_effect =</span> <span class="fl">0.20</span>, <span class="co"># effectiveness</span></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>                                              <span class="at">immune_param =</span> <span class="fu">c</span>(<span class="dv">7</span>, <span class="dv">1</span>) <span class="co"># mean and sd for delay before immunity</span></span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>                                              )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+<p>Time of intervention</p>
+<div class="cell">
+<details open="">
+<summary>Hide code</summary>
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>interv_time <span class="ot">&lt;-</span> interv_results<span class="sc">$</span>all_results <span class="sc">%&gt;%</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(I_clin <span class="sc">&gt;=</span> <span class="dv">3</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">slice_head</span>(<span class="at">n =</span> <span class="dv">1</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pull</span>(time)</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>interv_time</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 13</code></pre>
+</div>
+</div>
+<p>Plot intervention dynamics</p>
+<div class="cell">
+<details open="">
+<summary>Hide code</summary>
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_seiir_dynamics</span>(interv_results<span class="sc">$</span>summary, <span class="at">plot_title =</span> <span class="st">"Intervention"</span>, <span class="at">vline=</span>interv_time)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<p><img src="compartmental_files/figure-html/unnamed-chunk-8-1.png" class="img-fluid" width="768"></p>
+</div>
+</div>
+<p>Plot incidence</p>
+<div class="cell">
+<details open="">
+<summary>Hide code</summary>
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>ratio_out <span class="ot">&lt;-</span> <span class="fu">calculate_ratio_subclinical</span>(interv_results<span class="sc">$</span>summary)</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>ratio_out<span class="sc">$</span>total[<span class="dv">2</span>]<span class="sc">/</span>ratio_out<span class="sc">$</span>total[<span class="dv">1</span>]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 0.6367239</code></pre>
+</div>
+<details open="">
+<summary>Hide code</summary>
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_incidence_bar</span>(interv_results<span class="sc">$</span>summary)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<p><img src="compartmental_files/figure-html/unnamed-chunk-9-1.png" class="img-fluid" width="768"></p>
+</div>
+</div>
+<div class="cell">
+
 </div>
 
 

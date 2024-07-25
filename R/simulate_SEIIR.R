@@ -1,3 +1,5 @@
+# base versionwoithout intervention or p_sub
+
 simulate_SEIIR <- function(seiir_model, distrib, initial_state, n_iterations = 1000, timesteps = 200) {
   
       times <- seq(0, timesteps, by = 1)
@@ -27,7 +29,7 @@ simulate_SEIIR <- function(seiir_model, distrib, initial_state, n_iterations = 1
       all_results <- bind_rows(lapply(results_list, function(df) df %>% mutate(iteration = row_number())), .id = "iteration")
       
       # summary stats
-      summarized_results <- all_results %>%
+      summary_results <- all_results %>%
         gather(key = "compartment", value = "count", -time, -iteration) %>%
         group_by(time, compartment) %>%
         summarize(
@@ -37,6 +39,11 @@ simulate_SEIIR <- function(seiir_model, distrib, initial_state, n_iterations = 1
           Q_0.75 = quantile(count, probs = 0.75),
           Q_0.975 = quantile(count, probs = 0.975)
         )
+      
+      summarized_results <- list()
+      summarized_results[["summary"]] <- summary_results
+      summarized_results[["all_results"]] <- all_results
+      
       
       return(summarized_results)
       
