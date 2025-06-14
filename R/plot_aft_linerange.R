@@ -20,8 +20,8 @@ plot_aft_linerange <- function(aft_model, xlabel = " ", ylabel = "Duration (days
     annotate("text", x = Inf, y = exp(mean_aft) - 0.2, 
              label = sprintf("(mean = %.2f)", exp(mean_aft)), 
              hjust = 9.9, vjust = 0, size = 4, col="gray40") +
-    geom_linerange(aes(ymin = Q_0.025, ymax = Q_0.975), size = 2.5, alpha=0.3) +
-    geom_linerange(aes(ymin = Q_0.25, ymax = Q_0.75), size = 3.5, alpha=0.5) +
+    geom_linerange(aes(ymin = Q_0.025, ymax = Q_0.975), linewidth = 2.5, alpha=0.3) +
+    geom_linerange(aes(ymin = Q_0.25, ymax = Q_0.75), linewidth = 3.5, alpha=0.5) +
     geom_point(aes(col=sig), size = 6) + 
     scale_color_manual(values = c('gray50', 'darkorange')) +
     labs(title = " ",

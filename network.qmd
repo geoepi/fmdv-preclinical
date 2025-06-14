@@ -1,0 +1,192 @@
+---
+title: "Between-Farm Transmission"
+description: "Simulation of an FMDV spread between farms"
+format:
+  html: 
+    df-print: kable
+    code-fold: show
+    code-summary: "Hide code"
+    code-overflow: wrap
+    toc-title: Page Contents
+    toc: true
+    toc-depth: 3
+    toc-location: right
+    number-sections: false
+    html-math-method: katex
+    smooth-scroll: true
+editor: source
+editor_options: 
+  chunk_output_type: console
+---
+```{=html}
+<style type="text/css">
+
+body, td {
+   font-size: 13pt;
+}
+code.r{
+  font-size: 9pt;
+}
+pre {
+  font-size: 11pt
+}
+</style>
+```
+
+## Description  
+The **challengeABM** package includes the *simulate_net_model()* function that accepts a networkis calibrated to exhibit the same within-host virus dynamics as the *simulate_room_to_room()* function uses for laboratory based animal experiments.  At simulation start, cattle (agents) are populated to a common area with a specified number of FMDV infected individuals.  On simulation hour 1, cattle begin making random contact with each other at a specified hourly rate to show homogeneous mixing.  
+
+Depending on the quantity of virus in the donor cattle and chance contacts, they may or may not infect others.  The quantity of virus in nasal passages and in blood serum has been calibrated to match the experimental study described in the analysis with parameters recorded in the default_herd_config.yaml configuration file that is available with this script. 
+
+```{r, warning=FALSE, message=FALSE, echo=FALSE}
+# Load needed libraries: 
+
+library(here)
+library(tidyverse)
+options(dplyr.summarise.inform = FALSE)
+library(pals)
+library(yaml)
+library(purrr)
+library(igraph)
+library(tidygraph)
+library(ggraph)
+library(osfr) # OSF Tools
+```
+
+```{r echo=FALSE}
+# authentication to save demo files: not required to run this script, may be deleted/skipped
+authentications <- yaml::read_yaml(here("local", "secrets.yaml"))
+
+# authenticate to OSF for write privileges
+osf_auth(authentications$osf_token)
+
+# project location
+osf_project_demo <- osf_retrieve_node("https://osf.io/qf2wr/")
+```
+
+## challengeABM Package       
+Simulation code is available here: [challengeABM](https://github.com/geoepi/challengeABM). The GitHub site includes an [Overview, Design concepts, Details](https://github.com/geoepi/challengeABM/blob/main/ODD_Decription.md) document.   
+```{r message=FALSE, warning=FALSE}
+# library(remotes)
+# remotes::install_github("geoepi/challengeABM")
+
+library(challengeABM)
+```
+
+##  Read Configuration File
+```{r}
+config_file <- read_yaml(here("config/base_config_fmdv.yaml"))
+```
+
+## Generate Network
+The *generate_farm_network()* function is used to create a graph network representing the spatial relationships between farms and number of cattle in each.  Nodes in the network represent farms and edges are proportional to the distance between those farms.  The returned *list()* includes a randomized `$graph` network object and a `$farm_df` data frame with the farm labels and cattle number.     
+  
+Using parameters in the configuration file:
+   
+Randomized spatial arrangement     
+```{r fig.height=10, fig.width=10}
+net <- generate_farm_network(config_file)
+
+plot_base_network(net$graph)
+```
+   
+Randomized number of cattle     
+```{r}
+# dimensions
+dim(net$farm_df)
+
+# peek at data
+head(net$farm_df)
+
+# cattle numbers
+range(net$farm_df$herd_size)
+```
+   
+Or alternatively using overrides: 
+```{r fig.height=10, fig.width=10}
+net_2 <- generate_farm_network(config_file,
+                               n_farms = 100,
+                               graph_type = "smallworld",
+                               herd_size_range = c(1000, 5000),
+                               seed = 12345)
+
+plot_base_network(net_2$graph)
+```
+
+```{r}
+# dimensions
+dim(net_2$farm_df)
+
+# peek at data
+head(net_2$farm_df)
+
+# cattle numbers
+range(net_2$farm_df$herd_size)
+```
+
+## Run Simulation
+The *simulate_net_model()* functions accepts the network and disease parameters from the config file and runs the simulation. This parameterization takes 3-5 minutes to run, therefore a copy is saved for reload.  
+  
+
+```{r eval=FALSE}
+model_result <- simulate_net_model(net, config_file)
+
+saveRDS(model_result, here("local/demo/model_result_2025-06-13.rds"))
+```
+  
+```{r message=FALSE, warning=FALSE, eval=FALSE, echo=FALSE}
+# Save to copy to OSF for public access
+osf_upload(osf_project_demo, path = here("local/demo/model_result_2025-06-13.rds"))
+```
+
+Download saved copy from OSF
+```{r}
+osf_id <- osf_project_demo %>%
+  osf_ls_files() %>%
+  filter(name == "model_result_2025-06-13.rds") # file to download
+
+osf_download(osf_id,
+             path = here("local/temp"), # where to save
+             conflicts = "overwrite")
+
+# read save file to environment
+model_result <- readRDS(here("local/temp/model_result_2025-06-13.rds"))
+```
+
+Examine returned object.  The returned object is a nested list, with dataframes for each farm and animal at each time step.  
+```{r}
+length(model_result)
+names(model_result)
+
+names(model_result$farm_status)
+names(model_result$farm_status$herd_agents)
+names(model_result$farm_status$herd_agents$farm_1)
+```
+
+
+## Extract Stats  
+Pulling a few statistics from the simulation using *extract_net_simulation_summary()*.  Note that functions such as *calculate_R0_from_network()* are available to calculate stats from a series of literately run models.   
+   
+Basic stats:  
+- R_farm: Farm-level reproduction estimated by outgoing node edges in network.  
+- outbreak_farms: Total number of farms with outbreaks in this demo simulation.  
+- first_infection_time: Time when first infection was detected.  
+- total_infected_at_first: Total animals infected at time first animal was detected (i.e., some undetected).   
+- total_infected_animals: Total infected animals over course of outbreak.   
+```{r}
+extract_net_simulation_summary(model_result)
+```
+
+
+## Animation  
+Viewing between farm disease spread.   
+```{r eval=FALSE}
+animate_spread(net=net,
+               farm_states = model_result$farm_status$herd_states, 
+               move_df = dplyr::bind_rows(model_result$movement_log),
+               output_file = here("images/spread.gif")
+               )
+```
+```{r fig.width=10, fig.height=10, warning=FALSE, message=FALSE}
+knitr::include_graphics(here("images/spread.gif"))
+```

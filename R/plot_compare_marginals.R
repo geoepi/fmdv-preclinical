@@ -1,4 +1,4 @@
-plot_compare_marginals <- function(samples_inc, samples_lat, x_max = 5, xlabel = "Duration (Days)", 
+plot_compare_marginals <- function(samples_inc, samples_lat, x_max = 7, xlabel = "Duration (Days)", 
                                     ylabel = "Probability") {
   samples_lat$set <- "latent"
   
@@ -13,19 +13,19 @@ plot_compare_marginals <- function(samples_inc, samples_lat, x_max = 5, xlabel =
     mutate(inc_med = samples_inc$quant0.5)
   
   x_positions <- c(0.6, 1.9, 4) 
-  annotations <- c("Latent", "SubClinical", "Clinical")
+  annotations <- c("Latent", "PreClinical", "Clinical")
   
   p <- ggplot(comb_samps, aes(time_vect, quant0.5, group=set)) +
     geom_ribbon(data=inter_curves,
-                aes(ymin=quant0.5, ymax=inc_med, group=NA), fill="orange", col=NA, alpha=0.3) +  
+                aes(ymin=quant0.5, ymax=inc_med, group=NA), fill="steelblue", col=NA, alpha=0.3) +  
     geom_line(data=samples_inc,
-              aes(time_vect, quant0.5), , linetype="solid", col="black", linewidth = 1) +
+              aes(time_vect, quant0.5), , linetype="solid", col="gray40", linewidth = 1) +
     geom_line(data=samples_lat,
-              aes(time_vect, quant0.5), , linetype="longdash", col="black", linewidth = 1) +
+              aes(time_vect, quant0.5), , linetype="longdash", col="gray40", linewidth = 1) +
     geom_hline(yintercept = 0.5,
                linetype = "dotdash",
-               linewidth = 1,
-               col = "gray60") +
+               linewidth = 0.65,
+               col = "gray30") +
     xlab(xlabel) + 
     ylab(ylabel) +
     scale_x_continuous(breaks= seq(0, x_max, 1), labels = seq(0, x_max, 1), limits = c(0, x_max)) +

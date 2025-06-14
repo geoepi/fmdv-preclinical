@@ -1,0 +1,78 @@
+# Simulation Duration
+num_hours: 720              # Total simulation time in hours
+delta_t: 1                  # Time step interval in hours
+
+# Initial Seeding
+num_donors: 0               # Default number of donor (initially infected) animals per farm or room
+initial_donors:             # Override for specific farms; e.g., farm_1 starts with 2 donor animals
+  farm_1: 2
+total_herd_size: 100        # Total number of animals per farm (if not using herd_size_range below)
+
+# Toggle to allow for preclinical infectiousness and recovery time
+preclin_infect: TRUE                    # TRUE if agents are infectious in preclinical state
+recovery_time_mean: 12                  # Mean recovery time in days
+recovery_time_sd: 1                     # SD of recovery time in days
+
+# Transmission Model (used in within-herd dose-response models only)
+contact_rate: 0.15                 # Mean number of contacts per infectious agent per hour
+dose_scaling_factor: 10            # Steepness of the dose-response sigmoid function
+dose_max_efficiency: 0.4           # Maximum possible efficiency of infection at saturation
+dose_efficiency_at_threshold: 0.15 # Efficiency value at the dose threshold (for sigmoid calibration)
+dose_threshold: 0.8                # Dose ratio where dose_efficiency_at_threshold is defined
+
+# Virus Dynamics (Titer-Based Models Only; not used in between-farm state-based model)
+nasal_threshold_mean: 7.8          # Mean threshold for clinical signs from nasal viral load
+nasal_threshold_sd: 0.2            # SD for nasal threshold
+serum_threshold_mean: 6.7          # Mean threshold for clinical signs from serum viral load
+serum_threshold_sd: 0.2            # SD for serum threshold
+infect_threshold_mean: 6.1         # Mean infectiousness threshold (nasal titer)
+infect_threshold_sd: 0.2           # SD for infectiousness threshold
+growth_rate_nasal_mean: 3.1        # Mean nasal virus growth rate
+growth_rate_nasal_sd: 0.2          # SD for nasal virus growth rate
+growth_rate_serum_mean: 2.6        # Mean serum virus growth rate
+growth_rate_serum_sd: 0.2          # SD for serum virus growth rate
+clearance_rate_mean: 0.6           # Mean viral clearance rate
+clearance_rate_sd: 0.2             # SD for clearance rate
+stochastic_noise_mean: 0.5         # Mean of log-normal noise in virus growth
+stochastic_noise_sd: 0.2           # SD of log-normal noise
+exponential_factor_mean: 1.1       # Mean exponential decay factor post-inflection
+exponential_factor_sd: 0.2         # SD of exponential decay factor
+inflection_point_mean: 5.6         # Mean time (days) to inflection point in viral growth
+inflection_point_sd: 0.2           # SD of inflection time
+growth_cease_mean: 120             # Mean time (hours) at which viral growth ceases
+growth_cease_sd: 2                 # SD of growth cessation time
+nasal_ccap_mean: 10                # Mean nasal virus carrying capacity
+nasal_ccap_sd: 0.2                 # SD of nasal carrying capacity
+serum_ccap_mean: 9                 # Mean serum virus carrying capacity
+serum_ccap_sd: 0.2                 # SD of serum carrying capacity
+
+# Probabilistic Progression Parameters (used in between-farm module)
+preclin_onset_median: 1.25              # Median time to preclinical infectiousness onset (days)
+preclin_onset_ci: [0.8, 2.1]            # 95% CI for onset time (days), used to fit Weibull
+preclin_duration_median: 2.05          # Median duration of preclinical phase (days)
+preclin_duration_ci: [1.2, 2.9]         # 95% CI for preclinical duration (days)
+clinical_duration_median: 6.0          # Median duration of clinical phase (days)
+clinical_duration_ci: [5.0, 7.0]        # 95% CI for clinical duration (days)
+
+# Between-Herd Network Parameters
+n_farms: 20                            # Number of farms in the network
+herd_size_range: [100, 1000]            # Range of herd sizes for farms (randomly drawn)
+graph_type: erdos                      # Network type: erdos, smallworld, or geometric
+shape_gamma: 2                         # Shape parameter for edge distance decay distribution
+scale_gamma: 5                         # Scale parameter for edge distance decay distribution
+lambda: 0.001                          # Controls decay of edge weights with distance: weight = exp(-lambda * distance)
+
+# Between-Herd Movement
+movement_prob: 0.1                     # Probability an individual is selected to move during movement events
+movement_interval: 24                 # Frequency of movement events in hours
+animals_moved_frac: 0.20              # Fraction of herd moved per event
+transmission_prob: 0.2                # Probability of transmission per contact (between-farms)
+detection_delay_hours: 120            # Delay (hours) between clinical detection and quarantine enforcement
+detection_triggers_quarantine: TRUE   # Whether clinical detection triggers quarantine
+seed: 300                             # Random seed for reproducibility (controls network graph and random draws)
+
+# Room-to-Room Criteria
+num_infected: 2
+num_non_infected_per_room: 4
+num_rooms: 5                       # Number of rooms, Room 1 is where donor inoculation occurs
+donor_move_interval: 24            # Donor movement frquency

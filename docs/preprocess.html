@@ -6,9 +6,9 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
-<meta name="description" content="Load and format experimental data for analysis.">
+<meta name="description" content="Preparing data collected during animal experiment and ANOVA">
 
-<title>FMDV Preclinical - Preprocessing</title>
+<title>FMDV Preclinical - Data Preprocessing</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -149,32 +149,24 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
   </li>  
   <li class="nav-item">
     <a class="nav-link" href="./incubation.html">
- <span class="menu-text">Incubation</span></a>
+ <span class="menu-text">Duration</span></a>
   </li>  
   <li class="nav-item">
-    <a class="nav-link" href="./latent.html">
- <span class="menu-text">Latent</span></a>
+    <a class="nav-link" href="./rooms.html">
+ <span class="menu-text">Room-to-Room</span></a>
   </li>  
   <li class="nav-item">
-    <a class="nav-link" href="./subclinical.html">
- <span class="menu-text">Subclinical</span></a>
+    <a class="nav-link" href="./herd.html">
+ <span class="menu-text">Within-Herd</span></a>
   </li>  
   <li class="nav-item">
-    <a class="nav-link" href="./serial_interval.html">
- <span class="menu-text">Fractional</span></a>
-  </li>  
-  <li class="nav-item">
-    <a class="nav-link" href="./longitudinal.html">
- <span class="menu-text">Longitudinal</span></a>
-  </li>  
-  <li class="nav-item">
-    <a class="nav-link" href="./compartmental.html">
- <span class="menu-text">Simulation</span></a>
+    <a class="nav-link" href="./network.html">
+ <span class="menu-text">Between-Farm</span></a>
   </li>  
 </ul>
             <ul class="navbar-nav navbar-nav-scroll ms-auto">
   <li class="nav-item">
-    <a class="nav-link" href="https://geoepi.github.io/">
+    <a class="nav-link" href="https://github.com/geoepi/fmdv-preclinical">
  <span class="menu-text">GeoEpi</span></a>
   </li>  
   <li class="nav-item compact">
@@ -210,12 +202,12 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">Preprocessing</h1>
+<h1 class="title">Data Preprocessing</h1>
 </div>
 
 <div>
   <div class="description">
-    Load and format experimental data for analysis.
+    Preparing data collected during animal experiment and ANOVA
   </div>
 </div>
 
@@ -244,18 +236,19 @@ pre {
 </style>
 <section id="libraries" class="level2">
 <h2 class="anchored" data-anchor-id="libraries">Libraries</h2>
+<p>Load needed libraries and packages.</p>
 <div class="cell">
 <details open="">
 <summary>Hide code</summary>
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(INLA)</span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(here)</span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(pals)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(here)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(pals)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 </section>
 <section id="custom-functions" class="level2">
 <h2 class="anchored" data-anchor-id="custom-functions">Custom Functions</h2>
+<p>Load customized functions.</p>
 <div class="cell">
 <details open="">
 <summary>Hide code</summary>
@@ -266,34 +259,24 @@ pre {
 </section>
 <section id="read-data" class="level2">
 <h2 class="anchored" data-anchor-id="read-data">Read Data</h2>
+<p>Data collected during animal experiment.</p>
 <div class="cell">
 <details open="">
 <summary>Hide code</summary>
 <div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>antem_df <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="fu">here</span>(<span class="st">"local/bov_antemortem_2024.csv"</span>))</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="co"># minimum date</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="co"># minimum date, donor inoculation</span></span>
 <span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>min_date <span class="ot">&lt;-</span> <span class="fu">min</span>(antem_df<span class="sc">$</span>date)</span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>min_date <span class="co"># date of donor inoculation</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="co"># add variables </span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>antem_df <span class="ot">&lt;-</span> antem_df <span class="sc">%&gt;%</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">hpdi =</span> <span class="fu">as.numeric</span>(<span class="fu">difftime</span>(date, min_date, <span class="at">units =</span> <span class="st">"hours"</span>)), <span class="co"># hours post donor inoculation </span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>         <span class="at">hpe =</span> dpe<span class="sc">*</span><span class="dv">24</span>, <span class="co"># convert dpe to hpe</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>         <span class="at">exp_type =</span> <span class="fu">if_else</span>(group <span class="sc">==</span> <span class="st">"donor"</span>, <span class="st">"inoc"</span>, <span class="st">"cont"</span>), <span class="co"># exposed by inoculation or direct contact</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>         <span class="at">fever =</span> <span class="fu">if_else</span>(temp <span class="sc">&gt;=</span> <span class="dv">104</span>, <span class="st">"fever"</span>, <span class="st">"no_fever"</span>), <span class="co"># temp &gt;= 104 constitutes fever</span></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>         <span class="at">censor_status =</span> <span class="fu">if_else</span>(group <span class="sc">==</span> <span class="st">"Group 1"</span> <span class="sc">|</span> animal <span class="sc">==</span> <span class="st">"BR23-24"</span>, <span class="dv">0</span>, <span class="dv">1</span>), <span class="co"># No obs symptoms (0) in these </span></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] "2023-06-26"</code></pre>
-</div>
-<details open="">
-<summary>Hide code</summary>
-<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># add variables </span></span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>antem_df <span class="ot">&lt;-</span> antem_df <span class="sc">%&gt;%</span></span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">hpdi =</span> <span class="fu">as.numeric</span>(<span class="fu">difftime</span>(date, min_date, <span class="at">units =</span> <span class="st">"hours"</span>)), <span class="co"># hours post donor inoculation </span></span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>         <span class="at">hpe =</span> dpe<span class="sc">*</span><span class="dv">24</span>, <span class="co"># convert dpe to hpe</span></span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>         <span class="at">exp_type =</span> <span class="fu">if_else</span>(group <span class="sc">==</span> <span class="st">"donor"</span>, <span class="st">"inoc"</span>, <span class="st">"cont"</span>), <span class="co"># exposed by inoculation or direct contact</span></span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>         <span class="at">fever =</span> <span class="fu">if_else</span>(temp <span class="sc">&gt;=</span> <span class="dv">104</span>, <span class="st">"fever"</span>, <span class="st">"no_fever"</span>), <span class="co"># temp &gt;= 104 constitutes fever</span></span>
-<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>         <span class="at">censor_status =</span> <span class="fu">if_else</span>(group <span class="sc">==</span> <span class="st">"Group 1"</span> <span class="sc">|</span> animal <span class="sc">==</span> <span class="st">"BR23-24"</span>, <span class="dv">0</span>, <span class="dv">1</span>), <span class="co"># No obs symptoms (0) in these </span></span>
-<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a><span class="fu">dim</span>(antem_df)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] 168  14</code></pre>
-</div>
 </div>
 </section>
 <section id="plots-to-check-data" class="level2">
@@ -303,10 +286,10 @@ pre {
 <div class="cell">
 <details open="">
 <summary>Hide code</summary>
-<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_donors</span>(antem_df)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_donors</span>(antem_df)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
-<p><img src="preprocess_files/figure-html/unnamed-chunk-4-1.png" class="img-fluid" width="768"></p>
+<p><img src="preprocess_files/figure-html/unnamed-chunk-4-1.png" class="img-fluid" width="960"></p>
 </div>
 </div>
 </section>
@@ -315,10 +298,10 @@ pre {
 <div class="cell">
 <details open="">
 <summary>Hide code</summary>
-<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_contact_groups</span>(antem_df)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_contact_groups</span>(antem_df)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
-<p><img src="preprocess_files/figure-html/unnamed-chunk-5-1.png" class="img-fluid" width="768"></p>
+<p><img src="preprocess_files/figure-html/unnamed-chunk-5-1.png" class="img-fluid" width="960"></p>
 </div>
 </div>
 </section>
@@ -326,26 +309,25 @@ pre {
 <section id="anova" class="level2">
 <h2 class="anchored" data-anchor-id="anova">ANOVA</h2>
 <p>To evaluate the differences in nasal, serum, and lesion score among groups and over time, repeated measures ANOVAs were applied using the <em>ezANOVA()</em> function from the <strong>ez</strong> R-package. The analyses included within-subjects (days post-exposure, dpe) and between-subjects (group) factors, with nasal, serum, and lesion scores as the dependent variables. Mauchly’s test was conducted to test the assumption of sphericity. Where violations were found, Greenhouse-Geisser and Huynh-Feldt corrections were applied.</p>
-<p>The repeated measures ANOVA results for nasal, serum, and lesion scores were significant. For nasal virus quantity, there were significant main effects of group (F(2, 9) = 9.22, p = 0.0066) and days post-exposure (dpe) (F(6, 54) = 33.99, p &lt; 0.0001), as well as a significant interaction between group and dpe (F(12, 54) = 5.53, p &lt; 0.0001), suggesting that nasal virus quantity varied significantly across groups and time, with different temporal patterns among groups. For serum virus quantity, no significant main effect of group was found (F(2, 9) = 2.79, p = 0.114), but there were significant effects of dpe (F(6, 54) = 25.18, p &lt; 0.0001) and the group by dpe interaction (F(12, 54) = 7.95, p &lt; 0.0001), indicating significant changes over time and different temporal patterns among groups. Lesion scores showed significant main effects of group (F(2, 9) = 5.86, p = 0.023) and dpe (F(6, 54) = 45.87, p &lt; 0.0001), and a significant interaction between group and dpe (F(12, 54) = 3.04, p = 0.0025), indicating significant differences in lesion severity across groups and over time, with varying temporal patterns among the groups.</p>
 <p><strong>Prepare Data</strong></p>
 <div class="cell">
 <details open="">
 <summary>Hide code</summary>
-<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>contact_groups <span class="ot">&lt;-</span> antem_df <span class="sc">%&gt;%</span></span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(group <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Group 2"</span>, <span class="st">"Group 3"</span>, <span class="st">"Group 4"</span>)) <span class="sc">%&gt;%</span></span>
-<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(animal, group, nasal, serum, dpe, score) <span class="sc">%&gt;%</span></span>
-<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">score =</span> <span class="fu">replace_na</span>(score, <span class="dv">0</span>)) <span class="sc">%&gt;%</span></span>
-<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">drop_na</span>() <span class="sc">%&gt;%</span></span>
-<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">score =</span> <span class="fu">replace_na</span>(score, <span class="dv">0</span>),          </span>
-<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">nasal =</span> <span class="fu">replace</span>(nasal, nasal <span class="sc">==</span> <span class="dv">45</span>, <span class="dv">0</span>), </span>
-<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">serum =</span> <span class="fu">replace</span>(serum, serum <span class="sc">==</span> <span class="dv">45</span>, <span class="dv">0</span>),</span>
-<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">dpe =</span> <span class="fu">as.factor</span>(dpe),                   </span>
-<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">animal =</span> <span class="fu">as.factor</span>(animal),            </span>
-<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">group =</span> <span class="fu">as.factor</span>(group)                </span>
-<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
-<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">as.data.frame</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>contact_groups <span class="ot">&lt;-</span> antem_df <span class="sc">%&gt;%</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(group <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Group 2"</span>, <span class="st">"Group 3"</span>, <span class="st">"Group 4"</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(animal, group, nasal, serum, dpe, score) <span class="sc">%&gt;%</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">score =</span> <span class="fu">replace_na</span>(score, <span class="dv">0</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">drop_na</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">score =</span> <span class="fu">replace_na</span>(score, <span class="dv">0</span>),          </span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">nasal =</span> <span class="fu">replace</span>(nasal, nasal <span class="sc">==</span> <span class="dv">45</span>, <span class="dv">0</span>), <span class="co"># 45 indicates no detection</span></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">serum =</span> <span class="fu">replace</span>(serum, serum <span class="sc">==</span> <span class="dv">45</span>, <span class="dv">0</span>),</span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">dpe =</span> <span class="fu">as.factor</span>(dpe),                   </span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">animal =</span> <span class="fu">as.factor</span>(animal),            </span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">group =</span> <span class="fu">as.factor</span>(group)                </span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">as.data.frame</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 <div class="panel-tabset">
@@ -356,8 +338,8 @@ pre {
 <div class="cell">
 <details open="">
 <summary>Hide code</summary>
-<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>nasal_anova <span class="ot">&lt;-</span> ez<span class="sc">::</span><span class="fu">ezANOVA</span>(<span class="at">data =</span> contact_groups, <span class="at">dv =</span> .(nasal), <span class="at">wid =</span> .(animal), <span class="at">within =</span> .(dpe), <span class="at">between =</span> .(group))</span>
-<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>nasal_anova</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>nasal_anova <span class="ot">&lt;-</span> ez<span class="sc">::</span><span class="fu">ezANOVA</span>(<span class="at">data =</span> contact_groups, <span class="at">dv =</span> .(nasal), <span class="at">wid =</span> .(animal), <span class="at">within =</span> .(dpe), <span class="at">between =</span> .(group))</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>nasal_anova</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>$ANOVA
@@ -383,8 +365,8 @@ $`Sphericity Corrections`
 <div class="cell">
 <details open="">
 <summary>Hide code</summary>
-<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>serum_anova <span class="ot">&lt;-</span> ez<span class="sc">::</span><span class="fu">ezANOVA</span>(<span class="at">data =</span> contact_groups, <span class="at">dv =</span> .(serum), <span class="at">wid =</span> .(animal), <span class="at">within =</span> .(dpe), <span class="at">between =</span> .(group))</span>
-<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>serum_anova</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>serum_anova <span class="ot">&lt;-</span> ez<span class="sc">::</span><span class="fu">ezANOVA</span>(<span class="at">data =</span> contact_groups, <span class="at">dv =</span> .(serum), <span class="at">wid =</span> .(animal), <span class="at">within =</span> .(dpe), <span class="at">between =</span> .(group))</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>serum_anova</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>$ANOVA
@@ -410,8 +392,8 @@ $`Sphericity Corrections`
 <div class="cell">
 <details open="">
 <summary>Hide code</summary>
-<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>score_anova <span class="ot">&lt;-</span> ez<span class="sc">::</span><span class="fu">ezANOVA</span>(<span class="at">data =</span> contact_groups, <span class="at">dv =</span> .(score), <span class="at">wid =</span> .(animal), <span class="at">within =</span> .(dpe), <span class="at">between =</span> .(group))</span>
-<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>score_anova</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>score_anova <span class="ot">&lt;-</span> ez<span class="sc">::</span><span class="fu">ezANOVA</span>(<span class="at">data =</span> contact_groups, <span class="at">dv =</span> .(score), <span class="at">wid =</span> .(animal), <span class="at">within =</span> .(dpe), <span class="at">between =</span> .(group))</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>score_anova</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>$ANOVA

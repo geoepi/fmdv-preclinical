@@ -9,19 +9,15 @@ website:
       - href: preprocess.qmd
         text: Preprocessing 
       - href: incubation.qmd
-        text: Incubation
-      - href: latent.qmd
-        text: Latent
-      - href: subclinical.qmd
-        text: Subclinical
-      - href: serial_interval.qmd
-        text: Fractional
-      - href: longitudinal.qmd
-        text: Longitudinal
-      - href: compartmental.qmd
-        text: Simulation
+        text: Duration
+      - href: rooms.qmd
+        text: Room-to-Room
+      - href: herd.qmd
+        text: Within-Herd
+      - href: network.qmd
+        text: Between-Farm
     right:
-      - href: https://geoepi.github.io/
+      - href: https://github.com/geoepi/fmdv-preclinical
         text: GeoEpi
       - icon: github
         href: https://github.com/geoepi/fmdv-preclinical

@@ -51,4 +51,7 @@ secrets.yaml
 # local data
 /local
 
+# abm notes
+/ABM
+
 /.quarto/

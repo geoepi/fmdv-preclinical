@@ -11,6 +11,7 @@ plot_group_phases <- function(df, samples_lat, xlabel = "Duration (Days)",
                      position = position_dodge(width = 0.5), linewidth = 3.5, alpha = 0.5) +
       geom_linerange(aes(ymin = Q_0.25, ymax = Q_0.75),
                      position = position_dodge(width = 0.5), linewidth = 4.5, alpha = 0.7) +
+      scale_x_discrete(expand = c(0.5, 0.2)) +
       scale_y_continuous(breaks = seq(0, ymax, by = 1), limits = c(0, ymax)) +
       scale_color_manual(values = c('steelblue', 'darkorange', "darkgreen")) +
       theme_minimal() +
@@ -34,5 +35,6 @@ plot_group_phases <- function(df, samples_lat, xlabel = "Duration (Days)",
                                      hjust=0.5, angle=0),
           axis.text.y = element_text(size=18, face="bold"),
           plot.title = element_text(size=22, face="bold"))
+  
   return(p)
 }

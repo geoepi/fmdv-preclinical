@@ -114,28 +114,28 @@
   {
     "objectID": "preprocess.html",
     "href": "preprocess.html",
-    "title": "Preprocessing",
+    "title": "Data Preprocessing",
     "section": "",
-    "text": "Hide code\nlibrary(tidyverse)\nlibrary(INLA)\nlibrary(here)\nlibrary(pals)"
+    "text": "Load needed libraries and packages.\n\n\nHide code\nlibrary(tidyverse)\nlibrary(here)\nlibrary(pals)"
   },
   {
     "objectID": "preprocess.html#custom-functions",
     "href": "preprocess.html#custom-functions",
-    "title": "Preprocessing",
+    "title": "Data Preprocessing",
     "section": "Custom Functions",
-    "text": "Custom Functions\n\n\nHide code\nsource(here(\"R/utilities.R\"))\nsource_dir(here(\"R\"))"
+    "text": "Custom Functions\nLoad customized functions.\n\n\nHide code\nsource(here(\"R/utilities.R\"))\nsource_dir(here(\"R\"))"
   },
   {
     "objectID": "preprocess.html#read-data",
     "href": "preprocess.html#read-data",
-    "title": "Preprocessing",
+    "title": "Data Preprocessing",
     "section": "Read Data",
-    "text": "Read Data\n\n\nHide code\nantem_df <- read_csv(here(\"local/bov_antemortem_2024.csv\"))\n\n# minimum date\nmin_date <- min(antem_df$date)\nmin_date # date of donor inoculation\n\n\n[1] \"2023-06-26\"\n\n\nHide code\n# add variables \nantem_df <- antem_df %>%\n  mutate(hpdi = as.numeric(difftime(date, min_date, units = \"hours\")), # hours post donor inoculation \n         hpe = dpe*24, # convert dpe to hpe\n         exp_type = if_else(group == \"donor\", \"inoc\", \"cont\"), # exposed by inoculation or direct contact\n         fever = if_else(temp >= 104, \"fever\", \"no_fever\"), # temp >= 104 constitutes fever\n         censor_status = if_else(group == \"Group 1\" | animal == \"BR23-24\", 0, 1), # No obs symptoms (0) in these \n  )\n\ndim(antem_df)\n\n\n[1] 168  14"
+    "text": "Read Data\nData collected during animal experiment.\n\n\nHide code\nantem_df <- read_csv(here(\"local/bov_antemortem_2024.csv\"))\n\n# minimum date, donor inoculation\nmin_date <- min(antem_df$date)\n\n# add variables \nantem_df <- antem_df %>%\n  mutate(hpdi = as.numeric(difftime(date, min_date, units = \"hours\")), # hours post donor inoculation \n         hpe = dpe*24, # convert dpe to hpe\n         exp_type = if_else(group == \"donor\", \"inoc\", \"cont\"), # exposed by inoculation or direct contact\n         fever = if_else(temp >= 104, \"fever\", \"no_fever\"), # temp >= 104 constitutes fever\n         censor_status = if_else(group == \"Group 1\" | animal == \"BR23-24\", 0, 1), # No obs symptoms (0) in these \n  )"
   },
   {
     "objectID": "preprocess.html#plots-to-check-data",
     "href": "preprocess.html#plots-to-check-data",
-    "title": "Preprocessing",
+    "title": "Data Preprocessing",
     "section": "Plots to Check Data",
     "text": "Plots to Check Data\n\nDonors\n\n\nHide code\nplot_donors(antem_df)\n\n\n\n\n\n\n\nContact Groups\n\n\nHide code\nplot_contact_groups(antem_df)"
   },
@@ -235,14 +235,14 @@
     "href": "index.html",
     "title": "Overview",
     "section": "",
-    "text": "Under Active Development\n\n\n\nThis site includes exploratory analyses that have not been verified or validated and are subject to change."
+    "text": "Under Peer-Review\n\n\n\nThis site overviews and provides demonstrative analyses for work that is currently subject to peer-review and subject to change."
   },
   {
     "objectID": "preprocess.html#anova",
     "href": "preprocess.html#anova",
-    "title": "Preprocessing",
+    "title": "Data Preprocessing",
     "section": "ANOVA",
-    "text": "ANOVA\nTo evaluate the differences in nasal, serum, and lesion score among groups and over time, repeated measures ANOVAs were applied using the ezANOVA() function from the ez R-package. The analyses included within-subjects (days post-exposure, dpe) and between-subjects (group) factors, with nasal, serum, and lesion scores as the dependent variables. Mauchly’s test was conducted to test the assumption of sphericity. Where violations were found, Greenhouse-Geisser and Huynh-Feldt corrections were applied.\nThe repeated measures ANOVA results for nasal, serum, and lesion scores were significant. For nasal virus quantity, there were significant main effects of group (F(2, 9) = 9.22, p = 0.0066) and days post-exposure (dpe) (F(6, 54) = 33.99, p < 0.0001), as well as a significant interaction between group and dpe (F(12, 54) = 5.53, p < 0.0001), suggesting that nasal virus quantity varied significantly across groups and time, with different temporal patterns among groups. For serum virus quantity, no significant main effect of group was found (F(2, 9) = 2.79, p = 0.114), but there were significant effects of dpe (F(6, 54) = 25.18, p < 0.0001) and the group by dpe interaction (F(12, 54) = 7.95, p < 0.0001), indicating significant changes over time and different temporal patterns among groups. Lesion scores showed significant main effects of group (F(2, 9) = 5.86, p = 0.023) and dpe (F(6, 54) = 45.87, p < 0.0001), and a significant interaction between group and dpe (F(12, 54) = 3.04, p = 0.0025), indicating significant differences in lesion severity across groups and over time, with varying temporal patterns among the groups.\nPrepare Data\n\n\nHide code\ncontact_groups <- antem_df %>%\n  filter(group %in% c(\"Group 2\", \"Group 3\", \"Group 4\")) %>%\n  select(animal, group, nasal, serum, dpe, score) %>%\n  mutate(\n    score = replace_na(score, 0)) %>%\n  drop_na() %>%\n  mutate(\n    score = replace_na(score, 0),          \n    nasal = replace(nasal, nasal == 45, 0), \n    serum = replace(serum, serum == 45, 0),\n    dpe = as.factor(dpe),                   \n    animal = as.factor(animal),            \n    group = as.factor(group)                \n  ) %>%\n  as.data.frame()\n\n\n\nNasalSerumScore\n\n\nResults indicate that nasal virus quantity differed significantly between the groups and across the days post-exposure, with an interaction effect suggesting that the temporal pattern of virus quantity varied among the groups.\n\n\nHide code\nnasal_anova <- ez::ezANOVA(data = contact_groups, dv = .(nasal), wid = .(animal), within = .(dpe), between = .(group))\nnasal_anova\n\n\n$ANOVA\n     Effect DFn DFd         F            p p<.05       ges\n2     group   2   9  9.223642 6.619789e-03     * 0.2693092\n3       dpe   6  54 33.985994 1.195097e-16     * 0.7559307\n4 group:dpe  12  54  5.531737 4.748785e-06     * 0.5020495\n\n$`Mauchly's Test for Sphericity`\n     Effect           W           p p<.05\n3       dpe 0.002507464 0.007421478     *\n4 group:dpe 0.002507464 0.007421478     *\n\n$`Sphericity Corrections`\n     Effect       GGe        p[GG] p[GG]<.05       HFe        p[HF] p[HF]<.05\n3       dpe 0.4698995 7.240063e-09         * 0.7063488 2.378893e-12         *\n4 group:dpe 0.4698995 1.041644e-03         * 0.7063488 9.172502e-05         *\n\n\n\n\nResults suggest that while there were no significant differences between groups, there were significant changes over time, and the pattern of these changes differed significantly among the groups.\n\n\nHide code\nserum_anova <- ez::ezANOVA(data = contact_groups, dv = .(serum), wid = .(animal), within = .(dpe), between = .(group))\nserum_anova\n\n\n$ANOVA\n     Effect DFn DFd         F            p p<.05       ges\n2     group   2   9  2.789541 1.141052e-01       0.1386202\n3       dpe   6  54 25.182482 5.082150e-14     * 0.6744439\n4 group:dpe  12  54  7.951312 2.761527e-08     * 0.5667711\n\n$`Mauchly's Test for Sphericity`\n     Effect            W            p p<.05\n3       dpe 1.265279e-05 6.228482e-08     *\n4 group:dpe 1.265279e-05 6.228482e-08     *\n\n$`Sphericity Corrections`\n     Effect       GGe        p[GG] p[GG]<.05       HFe        p[HF] p[HF]<.05\n3       dpe 0.2446423 7.610504e-05         * 0.2805428 2.727829e-05         *\n4 group:dpe 0.2446423 2.894414e-03         * 0.2805428 1.633022e-03         *\n\n\n\n\nResults indicate that lesion scores differed significantly between the groups and across the days post-exposure, with an interaction effect suggesting that the temporal pattern of lesion severity varied among the groups.\n\n\nHide code\nscore_anova <- ez::ezANOVA(data = contact_groups, dv = .(score), wid = .(animal), within = .(dpe), between = .(group))\nscore_anova\n\n\n$ANOVA\n     Effect DFn DFd         F            p p<.05       ges\n2     group   2   9  5.860606 2.345433e-02     * 0.2550442\n3       dpe   6  54 45.873199 1.823174e-19     * 0.7897890\n4 group:dpe  12  54  3.038905 2.531711e-03     * 0.3323484\n\n$`Mauchly's Test for Sphericity`\n     Effect            W            p p<.05\n3       dpe 6.163627e-19 5.763765e-47     *\n4 group:dpe 6.163627e-19 5.763765e-47     *\n\n$`Sphericity Corrections`\n     Effect       GGe        p[GG] p[GG]<.05       HFe        p[HF] p[HF]<.05\n3       dpe 0.4739793 2.829807e-10         * 0.7157848 1.639730e-14         *\n4 group:dpe 0.4739793 2.364298e-02         * 0.7157848 8.310038e-03         *"
+    "text": "ANOVA\nTo evaluate the differences in nasal, serum, and lesion score among groups and over time, repeated measures ANOVAs were applied using the ezANOVA() function from the ez R-package. The analyses included within-subjects (days post-exposure, dpe) and between-subjects (group) factors, with nasal, serum, and lesion scores as the dependent variables. Mauchly’s test was conducted to test the assumption of sphericity. Where violations were found, Greenhouse-Geisser and Huynh-Feldt corrections were applied.\nPrepare Data\n\n\nHide code\ncontact_groups <- antem_df %>%\n  filter(group %in% c(\"Group 2\", \"Group 3\", \"Group 4\")) %>%\n  select(animal, group, nasal, serum, dpe, score) %>%\n  mutate(\n    score = replace_na(score, 0)) %>%\n  drop_na() %>%\n  mutate(\n    score = replace_na(score, 0),          \n    nasal = replace(nasal, nasal == 45, 0), # 45 indicates no detection\n    serum = replace(serum, serum == 45, 0),\n    dpe = as.factor(dpe),                   \n    animal = as.factor(animal),            \n    group = as.factor(group)                \n  ) %>%\n  as.data.frame()\n\n\n\nNasalSerumScore\n\n\nResults indicate that nasal virus quantity differed significantly between the groups and across the days post-exposure, with an interaction effect suggesting that the temporal pattern of virus quantity varied among the groups.\n\n\nHide code\nnasal_anova <- ez::ezANOVA(data = contact_groups, dv = .(nasal), wid = .(animal), within = .(dpe), between = .(group))\nnasal_anova\n\n\n$ANOVA\n     Effect DFn DFd         F            p p<.05       ges\n2     group   2   9  9.223642 6.619789e-03     * 0.2693092\n3       dpe   6  54 33.985994 1.195097e-16     * 0.7559307\n4 group:dpe  12  54  5.531737 4.748785e-06     * 0.5020495\n\n$`Mauchly's Test for Sphericity`\n     Effect           W           p p<.05\n3       dpe 0.002507464 0.007421478     *\n4 group:dpe 0.002507464 0.007421478     *\n\n$`Sphericity Corrections`\n     Effect       GGe        p[GG] p[GG]<.05       HFe        p[HF] p[HF]<.05\n3       dpe 0.4698995 7.240063e-09         * 0.7063488 2.378893e-12         *\n4 group:dpe 0.4698995 1.041644e-03         * 0.7063488 9.172502e-05         *\n\n\n\n\nResults suggest that while there were no significant differences between groups, there were significant changes over time, and the pattern of these changes differed significantly among the groups.\n\n\nHide code\nserum_anova <- ez::ezANOVA(data = contact_groups, dv = .(serum), wid = .(animal), within = .(dpe), between = .(group))\nserum_anova\n\n\n$ANOVA\n     Effect DFn DFd         F            p p<.05       ges\n2     group   2   9  2.789541 1.141052e-01       0.1386202\n3       dpe   6  54 25.182482 5.082150e-14     * 0.6744439\n4 group:dpe  12  54  7.951312 2.761527e-08     * 0.5667711\n\n$`Mauchly's Test for Sphericity`\n     Effect            W            p p<.05\n3       dpe 1.265279e-05 6.228482e-08     *\n4 group:dpe 1.265279e-05 6.228482e-08     *\n\n$`Sphericity Corrections`\n     Effect       GGe        p[GG] p[GG]<.05       HFe        p[HF] p[HF]<.05\n3       dpe 0.2446423 7.610504e-05         * 0.2805428 2.727829e-05         *\n4 group:dpe 0.2446423 2.894414e-03         * 0.2805428 1.633022e-03         *\n\n\n\n\nResults indicate that lesion scores differed significantly between the groups and across the days post-exposure, with an interaction effect suggesting that the temporal pattern of lesion severity varied among the groups.\n\n\nHide code\nscore_anova <- ez::ezANOVA(data = contact_groups, dv = .(score), wid = .(animal), within = .(dpe), between = .(group))\nscore_anova\n\n\n$ANOVA\n     Effect DFn DFd         F            p p<.05       ges\n2     group   2   9  5.860606 2.345433e-02     * 0.2550442\n3       dpe   6  54 45.873199 1.823174e-19     * 0.7897890\n4 group:dpe  12  54  3.038905 2.531711e-03     * 0.3323484\n\n$`Mauchly's Test for Sphericity`\n     Effect            W            p p<.05\n3       dpe 6.163627e-19 5.763765e-47     *\n4 group:dpe 6.163627e-19 5.763765e-47     *\n\n$`Sphericity Corrections`\n     Effect       GGe        p[GG] p[GG]<.05       HFe        p[HF] p[HF]<.05\n3       dpe 0.4739793 2.829807e-10         * 0.7157848 1.639730e-14         *\n4 group:dpe 0.4739793 2.364298e-02         * 0.7157848 8.310038e-03         *"
   },
   {
     "objectID": "preprocess.html#nasal",
@@ -327,5 +327,180 @@
     "title": "Compartmental Models",
     "section": "Simulation with Intervention",
     "text": "Simulation with Intervention\n\n\nHide code\ninterv_results <- simulate_SEIIR_intervention(seiir_model,\n                                              param_distributions,\n                                              initial_state,\n                                              n_iterations = 1000,\n                                              timesteps = 200,\n                                              detect = 3, # when clinical cases >= detect, 3 per Backer 2012\n                                              vacc_effect = 0.20, # effectiveness\n                                              immune_param = c(7, 1) # mean and sd for delay before immunity\n                                              )\n\n\nTime of intervention\n\n\nHide code\ninterv_time <- interv_results$all_results %>%\n  filter(I_clin >= 3) %>%\n  slice_head(n = 1) %>%\n  pull(time)\n\ninterv_time\n\n\n[1] 13\n\n\nPlot intervention dynamics\n\n\nHide code\nplot_seiir_dynamics(interv_results$summary, plot_title = \"Intervention\", vline=interv_time)\n\n\n\n\n\nPlot incidence\n\n\nHide code\nratio_out <- calculate_ratio_subclinical(interv_results$summary)\nratio_out$total[2]/ratio_out$total[1]\n\n\n[1] 0.6367239\n\n\nHide code\nplot_incidence_bar(interv_results$summary)"
+  },
+  {
+    "objectID": "index.html#contents",
+    "href": "index.html#contents",
+    "title": "Overview",
+    "section": "Contents:",
+    "text": "Contents:\n\nData Preprocessing: Preparing data collected during animal experiment.\n\nDurations: Estimating phase durations."
+  },
+  {
+    "objectID": "incubation.html#incubation-phase",
+    "href": "incubation.html#incubation-phase",
+    "title": "Phase Duration",
+    "section": "Incubation Phase",
+    "text": "Incubation Phase\n\nClinical Onset\nThe find_clinical_onset() function identifies first occurrence of score > 0 then creates new “Event” column with 1 at this date, 0’s before this date, and a value 3 after that date.\n\n\nHide code\nclin_start_df <- as.data.frame(\n  find_clinical_onset(antem_df)\n)\n\n\n\n\nPrepare Data\nRemove Group 1: This group was not infected and has no expectation of developing disease.\n\n\nHide code\nclin_start_df <- clin_start_df %>%\n filter(group != \"Group 1\",\n         Event == 1 | censor_status == 0 & censor_k == 1)\n\n\nScale Time\nAdd an arbitrarily small value to eliminate zeros. Really not need with his specific data set, by an important step.\n\n\nHide code\nclin_start_df$scaled_duration <- clin_start_df$dpe + 0.0001\n\n\nWeighted Contacts\nContact with groups by donors was sequential at 24hr intervals, shedding rates (nasal swabs) varied over this period.\n\n\nHide code\nshed_rates <- antem_df %>%\n  filter(group == \"donor\") %>%\n  group_by(dpi) %>%\n  summarise(tot_shed = sum(ifelse(nasal == 45, 0, nasal), na.rm=T)) %>% # 45 indicates non-detection\n  mutate(group = paste(\"Group\", dpi, sep=\" \"))\n\n# match cumulative shed from donors based on time of contact\nclin_start_df$donor_shed <- with(shed_rates,\n                                 tot_shed[match(\n                                   clin_start_df$group,\n                                                 group)])\n\n# an integer index is needed, group contacts are correlated with time\nclin_start_df$shed_time <- as.integer(as.factor(clin_start_df$group))\n\n\n\n\nSurvival Models\nCreating a survival model object.\n\n\nHide code\nsurv_obj <- inla.surv(clin_start_df$scaled_duration, clin_start_df$Event)\n\n\n\nParametric SuvivalAccelerated Failure Time (AFT)\n\n\nParametric model for study-wide average duration.\n\n\nHide code\nreturn_quants <- c(0.025, 0.05, 0.25, 0.5, 0.75, 0.95, 0.975)\n\npc_prec_iid <- list(theta = list(prior=\"pc.prec\", \n                                 param=c(0.5, 0.001)))\n\nincubation_dur <- inla(surv_obj ~ 1 + \n                         f(shed_time, donor_shed,\n                           model = \"rw1\",\n                           constr=TRUE,\n                           scale.model = TRUE,\n                           hyper=pc_prec_iid),\n                        data = clin_start_df, \n                        verbose=FALSE,\n                        quantiles = return_quants,\n                        family = \"exponential.surv\",\n                        control.fixed = list(prec = 1, prec.intercept  = 0.0001),\n                        control.compute=list(dic = TRUE, cpo = FALSE, waic = TRUE))\n\n\n\n\nAn additional confirmatory model framework.\n\n\nHide code\nreturn_quants <- c(0.025, 0.05, 0.25, 0.5, 0.75, 0.95, 0.975)\n\npc_prec_iid <- list(theta = list(prior=\"pc.prec\", \n                                 param=c(0.5, 0.001)))\n\nincubation_aft <- inla(surv_obj ~ 1 +\n                       f(group,\n                           model = \"iid\",\n                           constr=FALSE,\n                           hyper=pc_prec_iid),\n                        data = clin_start_df, \n                        verbose=FALSE,\n                        quantiles = return_quants,\n                        family = \"lognormal.surv\",\n                        control.fixed = list(prec = 1, prec.intercept  = 0.0001),\n                        control.compute=list(dic = TRUE, cpo = FALSE, waic = TRUE))\n\n\n\n\n\n\n\nSample Marginals\nPerforming sampling on the parametric model results\n\n\nHide code\nincubation_samples <- compute_survival_marginals(incubation_dur, 14)\n\n\nCheck estimates at the 0.5 probability (median)\n\n\nHide code\nmedian_incubation <- find_closest_quant(incubation_samples, 0.5)\n\n\n\n\nIncubation Curve\nExceedance survival curve.\n\n\nHide code\nplot_survival_marginals(incubation_samples, x_max = 14, xlabel = \"Incubation Phase Duration\")\n\n\n\n\n\nsave incubation samples:\nThese files are saved on the project’s /assetsdirectory for later use.\n\n\nHide code\nsaveRDS(incubation_samples, here(\"assets/incubation_samples.rds\"))\nsaveRDS(median_incubation, here(\"assets/incubation_median.rds\"))\nsaveRDS(aft_incubation, here(\"assets/incubation_aft_median.rds\"))"
+  },
+  {
+    "objectID": "incubation.html#latent-phase",
+    "href": "incubation.html#latent-phase",
+    "title": "Phase Duration",
+    "section": "Latent Phase",
+    "text": "Latent Phase\n\nPrepare Data\nOrganize data\n\n\nHide code\nlatent_end_df <- antem_df %>%\n  filter(nasal >= 4.5 & nasal != 45) %>%\n  group_by(animal) %>%\n  filter(date == min(date)) %>%\n  mutate(latent_end = 1) %>%\n  ungroup()\n\n\nScale Time (as prior use)\n\n\nHide code\nlatent_end_df$scaled_duration <- latent_end_df$dpe + 0.0001\n\n\n\n\nSurvival Models\nResponse Variable Creating a survival object.\n\n\nHide code\nsurv_obj <- inla.surv(latent_end_df$scaled_duration, latent_end_df$latent_end)\n\n\n\nParametric SuvivalAccelerated Failure Time (AFT)\n\n\nParametric model for study-wide average duration.\n\n\nHide code\nreturn_quants <- c(0.025, 0.05, 0.25, 0.5, 0.75, 0.95, 0.975)\n\nlatent_end_mod <- inla(surv_obj ~ 1,\n                        data = latent_end_df, \n                        verbose=FALSE,\n                        quantiles = return_quants,\n                        family = \"exponential.surv\",\n                        control.fixed = list(prec = 1, prec.intercept  = 0.001),\n                        control.compute=list(dic = TRUE, cpo = FALSE, waic = TRUE))\n\n\n\n\nConfirmatory model for comparison.\n\n\nHide code\nreturn_quants <- c(0.025, 0.05, 0.25, 0.5, 0.75, 0.95, 0.975)\n\npc_prec_iid <- list(theta = list(prior=\"pc.prec\", \n                                 param=c(1, 0.001)))\n\nlatent_aft_mod <- inla(surv_obj ~ 1 +\n                       f(group,\n                           model = \"iid\",\n                           constr=FALSE,\n                           hyper=pc_prec_iid),\n                        data = latent_end_df, \n                        verbose=FALSE,\n                        quantiles = return_quants,\n                        family = \"lognormal.surv\",\n                        control.fixed = list(prec = 1, prec.intercept  = 0.0001),\n                        control.compute=list(dic = TRUE, cpo = FALSE, waic = TRUE))\n\n\n\n\n\n\n\nSample Marginals\nPerforming sampling on the model results\n\n\nHide code\nlatent_samples <- compute_survival_marginals(latent_end_mod, 7)\n\n\nCheck estimates at the 0.5 probability (median)\n\n\nHide code\nmedian_latent <- find_closest_quant(latent_samples, 0.5)\n\n\n\n\nLatent Curve\n\n\nHide code\nplot_survival_marginals(latent_samples, x_max = 5, xlabel = \"Latent Phase Duration\")\n\n\n\n\n\nsave latent samples: These files are saved on the project’s /assetsdirectory for later use.\n\n\nHide code\nsaveRDS(latent_samples, here(\"assets/latent_samples_sim.rds\"))\nsaveRDS(median_latent, here(\"assets/latent_median_sim.rds\"))\nsaveRDS(aft_latent, here(\"assets/latent_aft_median_sim.rds\"))"
+  },
+  {
+    "objectID": "incubation.html#subclinical",
+    "href": "incubation.html#subclinical",
+    "title": "Phase Duration",
+    "section": "Subclinical",
+    "text": "Subclinical\nComparing incubation and latent phase outcomes.\n\n\n\n\n\nHide code\nmedian_subclinical <- Map(function(x, y) x - y, median_incubation, median_latent)\n\nmedians_df <- as.data.frame(\n  rbind(\n    Incubation = as.data.frame(median_incubation),\n    Subclinical = as.data.frame(median_subclinical),\n    Latent = as.data.frame(median_latent)\n  )\n)\n\nmedians_df$Name <- rownames(medians_df)\nmedians_df$Name <- ordered(factor(medians_df$Name), c(\"Latent\", \"Subclinical\", \"Incubation\"))\n\n\n\n\n\nPlot study-wide median phases\n\n\nHide code\nplot_median_phases(medians_df)\n\n\n\n\n\nPlot subclinical curve based on study-wide rates.\n\n\nHide code\nplot_compare_marginals(incubation_samples, latent_samples)"
+  },
+  {
+    "objectID": "rooms.html",
+    "href": "rooms.html",
+    "title": "Room-to-Room Transmission",
+    "section": "",
+    "text": "The challengeABM package includes the simulate_room_to_room() function for simulating virus transmission between cattle. At simulation start, cattle (agents) are divided among five isolated rooms, with two donor cattle in Room 1, and four cattle in each of the other rooms, Rooms 2-5. On simulation hour 1, the two donor cattle are inoculated by a virus. The donor cattle remain isolated from other cattle for a 24hr period, then at the 24hr mark, the donor cattle (now infected) are moved to Room 2. At the next 24hr interval (48 hours since start of simulation), the donor cattle leave Room 2 and proceed to Room 3, where they remain for a 24hr period. The process continues with donors moving to Room 4 at 72hrs and finally Room 5 at 96hrs. The status of individual virus loads, clinical presentation (score), and other factors are recorded on an hourly basis.\nDepending on the quantity of virus in the donor cattle and chance contacts, they may or may not infect others. The quantity of virus in nasal passages and in blood serum has been calibrated to match the experimental study described in the analysis with parameters recorded in the base_config_fmdv.yaml configuration file that is available with this script."
+  },
+  {
+    "objectID": "rooms.html#preliminaries",
+    "href": "rooms.html#preliminaries",
+    "title": "Room-to-Room Transmission",
+    "section": "Preliminaries",
+    "text": "Preliminaries\nLoad needed libraries:\n\n\nHide code\nlibrary(here) # directory management\nlibrary(tidyverse) # data wrangling\noptions(dplyr.summarise.inform = FALSE)\nlibrary(pals) # color palettes for figures"
+  },
+  {
+    "objectID": "rooms.html#challengeabm-package",
+    "href": "rooms.html#challengeabm-package",
+    "title": "Room-to-Room Transmission",
+    "section": "challengeABM Package",
+    "text": "challengeABM Package\nSimulation code is available here: challengeABM. The GitHub site includes an Overview, Design concepts, Details document.\n\n\nHide code\n# library(remotes)\n# remotes::install_github(\"geoepi/challengeABM\")\n\nlibrary(challengeABM)"
+  },
+  {
+    "objectID": "rooms.html#run-the-simulation",
+    "href": "rooms.html#run-the-simulation",
+    "title": "Room-to-Room Transmission",
+    "section": "Run the simulation",
+    "text": "Run the simulation\nSet random seed for reproducible runs.\n\n\nHide code\nseed_val <- round(runif(1, 100, 1000),0)\nseed_val \n\n\n[1] 784\n\n\nHide code\nset.seed(seed_val)\n\n\nRun the simulation based using a configuration file with needed parameters..\n\n\nHide code\nmodel_result <- simulate_room_to_room(here(\"config/base_config_fmdv.yaml\"), # default parameters\n                                      num_infected = 2, # modify default to ensure 2 donors (like animal experiment)\n                                      num_hours = 360) # modify default to only run 360 time steps (hours)"
+  },
+  {
+    "objectID": "rooms.html#within-host-dynamics",
+    "href": "rooms.html#within-host-dynamics",
+    "title": "Room-to-Room Transmission",
+    "section": "Within-Host Dynamics",
+    "text": "Within-Host Dynamics\nView change in nasal and virus quantities within individual animals.\n\n\nHide code\nplot_virus_loads_R2R(model_result)"
+  },
+  {
+    "objectID": "rooms.html#status-of-individual-animals",
+    "href": "rooms.html#status-of-individual-animals",
+    "title": "Room-to-Room Transmission",
+    "section": "Status of Individual Animals",
+    "text": "Status of Individual Animals\nView the disease status of individual animals.\n\n\nHide code\nplot_animal_status(model_result)"
+  },
+  {
+    "objectID": "rooms.html#group-2",
+    "href": "rooms.html#group-2",
+    "title": "Room-to-Room Transmission",
+    "section": "Group 2",
+    "text": "Group 2\nRunning the model with the below seed will produce a comparable result to the animal experiment outcome.\n\n\nHide code\nset.seed(509)\nmodel_ctgrp2 <- simulate_room_to_room(here(\"config/base_config_fmdv.yaml\"), \n                                      num_infected = 2, num_hours = 360) # same as above\n\n\n\nView Group 2\nView the disease status of Group 2 animals. Note that donors did not become infectious until after more than 48 hours post inoculation. As a result, Group 2 animals exposed to donors during the 24-48hour period did not become infected. Also note that two infected animals never progressed to clinical disease.\n\n\nHide code\nplot_animal_status(model_ctgrp2)"
+  },
+  {
+    "objectID": "herd.html",
+    "href": "herd.html",
+    "title": "Within-Herd Transmission",
+    "section": "",
+    "text": "The challengeABM package includes the simulate_within_herd() function that is calibrated to exhibit the same within-host virus dynamics as the simulate_room_to_room() function uses for laboratory based animal experiments. At simulation start, cattle (agents) are populated to a common area with a specified number of FMDV infected individuals. On simulation hour 1, cattle begin making random contact with each other at a specified hourly rate to show homogeneous mixing.\nDepending on the quantity of virus in the donor cattle and chance contacts, they may or may not infect others. The quantity of virus in nasal passages and in blood serum has been calibrated to match the experimental study described in the analysis with parameters recorded in the default_herd_config.yaml configuration file that is available with this script.\n\n\n\n\n\nRegistered PAT from the provided token"
+  },
+  {
+    "objectID": "herd.html#challengeabm-package",
+    "href": "herd.html#challengeabm-package",
+    "title": "Within-Herd Transmission",
+    "section": "challengeABM Package",
+    "text": "challengeABM Package\nSimulation code is available here: challengeABM. The GitHub site includes an Overview, Design concepts, Details document.\n\n\nHide code\n# library(remotes)\n# remotes::install_github(\"geoepi/challengeABM\")\n\nlibrary(challengeABM)"
+  },
+  {
+    "objectID": "herd.html#run-the-simulation",
+    "href": "herd.html#run-the-simulation",
+    "title": "Within-Herd Transmission",
+    "section": "Run the simulation",
+    "text": "Run the simulation\nSet random seed for reproducible runs.\n\n\nHide code\nseed_val <- round(runif(1, 100, 1000),0)\nseed_val \n\n\n[1] 195\n\n\nHide code\nset.seed(seed_val)\n\n\nRun the simulation based using a configuration file with required parameters. Saving a copy for fast reloading of demo results.\n\n\nHide code\nmodel_result <- simulate_within_herd(here(\"config/base_config_fmdv.yaml\"),\n                                     num_donors = 2,\n                                     preclin_infect = TRUE,\n                                     contact_rate = 0.25,\n                                     seed = seed_val)\n\nsaveRDS(model_result, here(\"local/demo/model_result_herd_2025-06-13.rds\"))\n\n\n\n\n\nDownload saved copy from OSF\n\n\nHide code\nosf_id <- osf_project_demo %>%\n  osf_ls_files() %>%\n  filter(name == \"model_result_herd_2025-06-13.rds\") # file to download\n\nosf_download(osf_id,\n             path = here(\"local/temp\"), # where to save\n             conflicts = \"overwrite\")\n\n\n\n\n\n\n\n\n\n\n\n\nname\nid\nlocal_path\nmeta\n\n\n\n\nmodel_result_herd_2025-06-13.rds\n684cc2c7559e9edbf0cc2c08\nlocal/temp/model_result_herd_2025-06-13.rds\nmodel_result_herd_2025-06-13.rds , file , /684cc2c7559e9edbf0cc2c08 , 465971 , osfstorage , /model_result_herd_2025-06-13.rds , 1749861063 , 1749861063 , c8e7d13d7d139db24cd1ae834761c9e9 , fd1ffdfec2a6406130aada6808b7f46343654eb8f2951d0b8c78147ffd5b190b , 0 , TRUE , 1 , FALSE , https://api.osf.io/v2/files/684cc2c7559e9edbf0cc2c08/ , https://files.osf.io/v1/resources/qf2wr/providers/osfstorage/684cc2c7559e9edbf0cc2c08 , https://files.osf.io/v1/resources/qf2wr/providers/osfstorage/684cc2c7559e9edbf0cc2c08 , https://files.osf.io/v1/resources/qf2wr/providers/osfstorage/684cc2c7559e9edbf0cc2c08 , https://osf.io/download/684cc2c7559e9edbf0cc2c08/ , https://mfr.osf.io/render?url=https%3A%2F%2Fosf.io%2Fdownload%2F684cc2c7559e9edbf0cc2c08%2F%3Fdirect%26mode%3Drender, https://osf.io/qf2wr/files/osfstorage/684cc2c7559e9edbf0cc2c08 , https://api.osf.io/v2/files/684cc2c7559e9edbf0cc2c08/ , https://api.osf.io/v2/files/684cb2aed0a256104638874a/ , 684cb2aed0a256104638874a , files , https://api.osf.io/v2/files/684cc2c7559e9edbf0cc2c08/versions/ , https://api.osf.io/v2/nodes/qf2wr/ , qf2wr , nodes , https://api.osf.io/v2/nodes/qf2wr/ , nodes , nodes , qf2wr , https://api.osf.io/v2/files/684cc2c7559e9edbf0cc2c08/cedar_metadata_records/\n\n\n\n\n\n\nHide code\n# read save file to environment\nmodel_result <- readRDS(here(\"local/temp/model_result_herd_2025-06-13.rds\"))"
+  },
+  {
+    "objectID": "herd.html#within-host-dynamics",
+    "href": "herd.html#within-host-dynamics",
+    "title": "Within-Herd Transmission",
+    "section": "Within-Host Dynamics",
+    "text": "Within-Host Dynamics\nRandomly select 21 of 100 simulated animals to view nasal and virus quantities.\n\n\nHide code\nplot_individual_virus_loads(model_result, sample_n = 21)"
+  },
+  {
+    "objectID": "herd.html#herd-outbreak-curve",
+    "href": "herd.html#herd-outbreak-curve",
+    "title": "Within-Herd Transmission",
+    "section": "Herd Outbreak Curve",
+    "text": "Herd Outbreak Curve\nCompare the number of infected and recovered individuals.\n\n\nHide code\nplot_herd_curve(model_result)"
+  },
+  {
+    "objectID": "network.html",
+    "href": "network.html",
+    "title": "Between-Farm Transmission",
+    "section": "",
+    "text": "The challengeABM package includes the simulate_net_model() function that accepts a networkis calibrated to exhibit the same within-host virus dynamics as the simulate_room_to_room() function uses for laboratory based animal experiments. At simulation start, cattle (agents) are populated to a common area with a specified number of FMDV infected individuals. On simulation hour 1, cattle begin making random contact with each other at a specified hourly rate to show homogeneous mixing.\nDepending on the quantity of virus in the donor cattle and chance contacts, they may or may not infect others. The quantity of virus in nasal passages and in blood serum has been calibrated to match the experimental study described in the analysis with parameters recorded in the default_herd_config.yaml configuration file that is available with this script.\n\n\n\n\n\nRegistered PAT from the provided token"
+  },
+  {
+    "objectID": "network.html#challengeabm-package",
+    "href": "network.html#challengeabm-package",
+    "title": "Between-Farm Transmission",
+    "section": "challengeABM Package",
+    "text": "challengeABM Package\nSimulation code is available here: challengeABM. The GitHub site includes an Overview, Design concepts, Details document.\n\n\nHide code\n# library(remotes)\n# remotes::install_github(\"geoepi/challengeABM\")\n\nlibrary(challengeABM)"
+  },
+  {
+    "objectID": "network.html#read-configuration-file",
+    "href": "network.html#read-configuration-file",
+    "title": "Between-Farm Transmission",
+    "section": "Read Configuration File",
+    "text": "Read Configuration File\n\n\nHide code\nconfig_file <- read_yaml(here(\"config/base_config_fmdv.yaml\"))"
+  },
+  {
+    "objectID": "network.html#generate-network",
+    "href": "network.html#generate-network",
+    "title": "Between-Farm Transmission",
+    "section": "Generate Network",
+    "text": "Generate Network\nThe generate_farm_network() function is used to create a graph network representing the spatial relationships between farms and number of cattle in each. Nodes in the network represent farms and edges are proportional to the distance between those farms. The returned list() includes a randomized $graph network object and a $farm_df data frame with the farm labels and cattle number.\nUsing parameters in the configuration file:\nRandomized spatial arrangement\n\n\nHide code\nnet <- generate_farm_network(config_file)\n\nplot_base_network(net$graph)\n\n\n\n\n\nRandomized number of cattle\n\n\nHide code\n# dimensions\ndim(net$farm_df)\n\n\n[1] 20  3\n\n\nHide code\n# peek at data\nhead(net$farm_df)\n\n\n\n\n\n\nfarm_id\nnode_id\nherd_size\n\n\n\n\nfarm_1\n1\n277\n\n\nfarm_2\n2\n107\n\n\nfarm_3\n3\n572\n\n\nfarm_4\n4\n119\n\n\nfarm_5\n5\n552\n\n\nfarm_6\n6\n598\n\n\n\n\n\n\nHide code\n# cattle numbers\nrange(net$farm_df$herd_size)\n\n\n[1] 107 935\n\n\nOr alternatively using overrides:\n\n\nHide code\nnet_2 <- generate_farm_network(config_file,\n                               n_farms = 100,\n                               graph_type = \"smallworld\",\n                               herd_size_range = c(1000, 5000),\n                               seed = 12345)\n\nplot_base_network(net_2$graph)\n\n\n\n\n\n\n\nHide code\n# dimensions\ndim(net_2$farm_df)\n\n\n[1] 100   3\n\n\nHide code\n# peek at data\nhead(net_2$farm_df)\n\n\n\n\n\n\nfarm_id\nnode_id\nherd_size\n\n\n\n\nfarm_1\n1\n2881\n\n\nfarm_2\n2\n2152\n\n\nfarm_3\n3\n2270\n\n\nfarm_4\n4\n1432\n\n\nfarm_5\n5\n4383\n\n\nfarm_6\n6\n2880\n\n\n\n\n\n\nHide code\n# cattle numbers\nrange(net_2$farm_df$herd_size)\n\n\n[1] 1043 4955"
+  },
+  {
+    "objectID": "network.html#run-simulation",
+    "href": "network.html#run-simulation",
+    "title": "Between-Farm Transmission",
+    "section": "Run Simulation",
+    "text": "Run Simulation\nThe simulate_net_model() functions accepts the network and disease parameters from the config file and runs the simulation. This parameterization takes 3-5 minutes to run, therefore a copy is saved for reload.\n\n\nHide code\nmodel_result <- simulate_net_model(net, config_file)\n\nsaveRDS(model_result, here(\"local/demo/model_result_2025-06-13.rds\"))\n\n\n\n\n\nDownload saved copy from OSF\n\n\nHide code\nosf_id <- osf_project_demo %>%\n  osf_ls_files() %>%\n  filter(name == \"model_result_2025-06-13.rds\") # file to download\n\nosf_download(osf_id,\n             path = here(\"local/temp\"), # where to save\n             conflicts = \"overwrite\")\n\n\n\n\n\n\n\n\n\n\n\n\nname\nid\nlocal_path\nmeta\n\n\n\n\nmodel_result_2025-06-13.rds\n684cbc31fea3288c3ab687ad\nlocal/temp/model_result_2025-06-13.rds\nmodel_result_2025-06-13.rds , file , /684cbc31fea3288c3ab687ad , 4172117 , osfstorage , /model_result_2025-06-13.rds , 1749859377 , 1749859377 , 274f06b6116b3d5bfe1088de8649938f , de11d00cab4e4f25dc259ee39b7567bfb0785b581447460e5f060a45fb15f0bf , 0 , TRUE , 1 , FALSE , https://api.osf.io/v2/files/684cbc31fea3288c3ab687ad/ , https://files.osf.io/v1/resources/qf2wr/providers/osfstorage/684cbc31fea3288c3ab687ad , https://files.osf.io/v1/resources/qf2wr/providers/osfstorage/684cbc31fea3288c3ab687ad , https://files.osf.io/v1/resources/qf2wr/providers/osfstorage/684cbc31fea3288c3ab687ad , https://osf.io/download/684cbc31fea3288c3ab687ad/ , https://mfr.osf.io/render?url=https%3A%2F%2Fosf.io%2Fdownload%2F684cbc31fea3288c3ab687ad%2F%3Fdirect%26mode%3Drender, https://osf.io/qf2wr/files/osfstorage/684cbc31fea3288c3ab687ad , https://api.osf.io/v2/files/684cbc31fea3288c3ab687ad/ , https://api.osf.io/v2/files/684cb2aed0a256104638874a/ , 684cb2aed0a256104638874a , files , https://api.osf.io/v2/files/684cbc31fea3288c3ab687ad/versions/ , https://api.osf.io/v2/nodes/qf2wr/ , qf2wr , nodes , https://api.osf.io/v2/nodes/qf2wr/ , nodes , nodes , qf2wr , https://api.osf.io/v2/files/684cbc31fea3288c3ab687ad/cedar_metadata_records/\n\n\n\n\n\n\nHide code\n# read save file to environment\nmodel_result <- readRDS(here(\"local/temp/model_result_2025-06-13.rds\"))\n\n\nExamine returned object. The returned object is a nested list, with dataframes for each farm and animal at each time step.\n\n\nHide code\nlength(model_result)\n\n\n[1] 3\n\n\nHide code\nnames(model_result)\n\n\n[1] \"farm_status\"    \"movement_log\"   \"quarantine_log\"\n\n\nHide code\nnames(model_result$farm_status)\n\n\n[1] \"herd_agents\" \"herd_states\" \"quarantined\"\n\n\nHide code\nnames(model_result$farm_status$herd_agents)\n\n\n [1] \"farm_1\"  \"farm_2\"  \"farm_3\"  \"farm_4\"  \"farm_5\"  \"farm_6\"  \"farm_7\" \n [8] \"farm_8\"  \"farm_9\"  \"farm_10\" \"farm_11\" \"farm_12\" \"farm_13\" \"farm_14\"\n[15] \"farm_15\" \"farm_16\" \"farm_17\" \"farm_18\" \"farm_19\" \"farm_20\"\n\n\nHide code\nnames(model_result$farm_status$herd_agents$farm_1)\n\n\n [1] \"id\"                              \"infection_status\"               \n [3] \"infect_agent\"                    \"is_donor\"                       \n [5] \"virus_nasal\"                     \"virus_serum\"                    \n [7] \"score_t\"                         \"nasal_threshold\"                \n [9] \"serum_threshold\"                 \"infect_threshold\"               \n[11] \"dose\"                            \"infectious_t\"                   \n[13] \"growth_rate_nasal\"               \"growth_rate_serum\"              \n[15] \"clearance_rate\"                  \"stochastic_noise\"               \n[17] \"exponential_factor\"              \"inflection_point_nasal\"         \n[19] \"inflection_point_serum\"          \"inflection_point_absolute_nasal\"\n[21] \"inflection_point_absolute_serum\" \"growth_cease\"                   \n[23] \"nasal_ccap\"                      \"serum_ccap\"                     \n[25] \"infection_time\"                  \"score\"                          \n[27] \"recovery_time\"                   \"has_recovered\"                  \n[29] \"infector_id\"                     \"preclin_onset\"                  \n[31] \"preclin_dur\"                     \"clinical_dur\"                   \n[33] \"transmitter_state\"               \"time_since_infection\"           \n[35] \"state\""
+  },
+  {
+    "objectID": "network.html#extract-stats",
+    "href": "network.html#extract-stats",
+    "title": "Between-Farm Transmission",
+    "section": "Extract Stats",
+    "text": "Extract Stats\nPulling a few statistics from the simulation using extract_net_simulation_summary(). Note that functions such as calculate_R0_from_network() are available to calculate stats from a series of literately run models.\nBasic stats:\n- R_farm: Farm-level reproduction estimated by outgoing node edges in network.\n- outbreak_farms: Total number of farms with outbreaks in this demo simulation.\n- first_infection_time: Time when first infection was detected.\n- total_infected_at_first: Total animals infected at time first animal was detected (i.e., some undetected).\n- total_infected_animals: Total infected animals over course of outbreak.\n\n\nHide code\nextract_net_simulation_summary(model_result)\n\n\n\n\n\n\n\n\n\n\n\n\n\nR_farm\noutbreak_farms\nfirst_infection_time\ntotal_infected_at_first\ntotal_infected_animals\n\n\n\n\n3.285714\n14\n14\n2\n7775"
+  },
+  {
+    "objectID": "network.html#animation",
+    "href": "network.html#animation",
+    "title": "Between-Farm Transmission",
+    "section": "Animation",
+    "text": "Animation\nViewing between farm disease spread.\n\n\nHide code\nanimate_spread(net=net,\n               farm_states = model_result$farm_status$herd_states, \n               move_df = dplyr::bind_rows(model_result$movement_log),\n               output_file = here(\"images/spread.gif\")\n               )\n\n\n\n\nHide code\nknitr::include_graphics(here(\"images/spread.gif\"))"
+  },
+  {
+    "objectID": "incubation.html",
+    "href": "incubation.html",
+    "title": "Phase Duration",
+    "section": "",
+    "text": "The script demonstrates use of time-to-event models for estimating FMD phase durations."
+  },
+  {
+    "objectID": "incubation.html#preclinical",
+    "href": "incubation.html#preclinical",
+    "title": "Phase Duration",
+    "section": "Preclinical",
+    "text": "Preclinical\nComparing incubation and latent phase outcomes.\n\n\n\n\n\nHide code\nmedian_preclinical <- Map(function(x, y) x - y, median_incubation, median_latent)\n\nmedians_df <- as.data.frame(\n  rbind(\n    Incubation = as.data.frame(median_incubation),\n    Preclinical = as.data.frame(median_preclinical),\n    Latent = as.data.frame(median_latent)\n  )\n)\n\nmedians_df$Name <- rownames(medians_df)\nmedians_df$Name <- ordered(factor(medians_df$Name), c(\"Latent\", \"Preclinical\", \"Incubation\"))\n\n\n\n\n\nPlot study-wide median phases\n\n\nHide code\nplot_median_phases(medians_df)\n\n\n\n\n\nPlot Preclinical curve based on study-wide rates.\n\n\nHide code\nplot_compare_marginals(incubation_samples, latent_samples)"
   }
 ]

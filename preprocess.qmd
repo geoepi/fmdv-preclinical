@@ -1,6 +1,6 @@
 ---
-title: "Preprocessing"
-description: "Load and format experimental data for analysis."
+title: "Data Preprocessing"
+description: "Preparing data collected during animal experiment and ANOVA"
 format:
   html: 
     df-print: kable
@@ -33,27 +33,28 @@ pre {
 </style>
 ```
 
-## Libraries
+## Libraries  
+Load needed libraries and packages.  
 ```{r, warning=FALSE, message=FALSE}
 library(tidyverse)
-library(INLA)
 library(here)
 library(pals)
 ```
 
-## Custom Functions
+## Custom Functions 
+Load customized functions.  
 ```{r}
 source(here("R/utilities.R"))
 source_dir(here("R"))
 ```
 
 ## Read Data  
+Data collected during animal experiment.
 ```{r warning=FALSE, message=FALSE}
 antem_df <- read_csv(here("local/bov_antemortem_2024.csv"))
 
-# minimum date
+# minimum date, donor inoculation
 min_date <- min(antem_df$date)
-min_date # date of donor inoculation
 
 # add variables 
 antem_df <- antem_df %>%
@@ -63,29 +64,26 @@ antem_df <- antem_df %>%
          fever = if_else(temp >= 104, "fever", "no_fever"), # temp >= 104 constitutes fever
          censor_status = if_else(group == "Group 1" | animal == "BR23-24", 0, 1), # No obs symptoms (0) in these 
   )
-
-dim(antem_df)
 ```
 
 
 ## Plots to Check Data  
 
 ### Donors  
-```{r fig.width=8, fig.height=8, warning=FALSE, message=FALSE}
+```{r fig.width=10, fig.height=10, warning=FALSE, message=FALSE}
 plot_donors(antem_df)
 ```
 
 
 
 ### Contact Groups
-```{r fig.width=8, fig.height=8, warning=FALSE, message=FALSE}
+```{r fig.width=10, fig.height=10, warning=FALSE, message=FALSE}
 plot_contact_groups(antem_df)
 ```
   
 ## ANOVA  
 To evaluate the differences in nasal, serum, and lesion score among groups and over time, repeated measures ANOVAs were applied using the *ezANOVA()* function from the **ez** R-package. The analyses included within-subjects (days post-exposure, dpe) and between-subjects (group) factors, with nasal, serum, and lesion scores as the dependent variables. Mauchly's test was conducted to test the assumption of sphericity. Where violations were found, Greenhouse-Geisser and Huynh-Feldt corrections were applied.  
   
-The repeated measures ANOVA results for nasal, serum, and lesion scores were significant. For nasal virus quantity, there were significant main effects of group (F(2, 9) = 9.22, p = 0.0066) and days post-exposure (dpe) (F(6, 54) = 33.99, p < 0.0001), as well as a significant interaction between group and dpe (F(12, 54) = 5.53, p < 0.0001), suggesting that nasal virus quantity varied significantly across groups and time, with different temporal patterns among groups. For serum virus quantity, no significant main effect of group was found (F(2, 9) = 2.79, p = 0.114), but there were significant effects of dpe (F(6, 54) = 25.18, p < 0.0001) and the group by dpe interaction (F(12, 54) = 7.95, p < 0.0001), indicating significant changes over time and different temporal patterns among groups. Lesion scores showed significant main effects of group (F(2, 9) = 5.86, p = 0.023) and dpe (F(6, 54) = 45.87, p < 0.0001), and a significant interaction between group and dpe (F(12, 54) = 3.04, p = 0.0025), indicating significant differences in lesion severity across groups and over time, with varying temporal patterns among the groups.    
 
 **Prepare Data**    
 ```{r}
@@ -97,7 +95,7 @@ contact_groups <- antem_df %>%
   drop_na() %>%
   mutate(
     score = replace_na(score, 0),          
-    nasal = replace(nasal, nasal == 45, 0), 
+    nasal = replace(nasal, nasal == 45, 0), # 45 indicates no detection
     serum = replace(serum, serum == 45, 0),
     dpe = as.factor(dpe),                   
     animal = as.factor(animal),            

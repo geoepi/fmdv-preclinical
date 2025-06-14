@@ -1,0 +1,124 @@
+---
+title: "Within-Herd Transmission"
+description: "Simulation of an FMDV spread between cattle in a herd"
+format:
+  html: 
+    df-print: kable
+    code-fold: show
+    code-summary: "Hide code"
+    code-overflow: wrap
+    toc-title: Page Contents
+    toc: true
+    toc-depth: 3
+    toc-location: right
+    number-sections: false
+    html-math-method: katex
+    smooth-scroll: true
+editor: source
+editor_options: 
+  chunk_output_type: console
+---
+```{=html}
+<style type="text/css">
+
+body, td {
+   font-size: 13pt;
+}
+code.r{
+  font-size: 9pt;
+}
+pre {
+  font-size: 11pt
+}
+</style>
+```
+
+## Description  
+The **challengeABM** package includes the *simulate_within_herd()* function that is calibrated to exhibit the same within-host virus dynamics as the *simulate_room_to_room()* function uses for laboratory based animal experiments.  At simulation start, cattle (agents) are populated to a common area with a specified number of FMDV infected individuals.  On simulation hour 1, cattle begin making random contact with each other at a specified hourly rate to show homogeneous mixing.  
+
+Depending on the quantity of virus in the donor cattle and chance contacts, they may or may not infect others.  The quantity of virus in nasal passages and in blood serum has been calibrated to match the experimental study described in the analysis with parameters recorded in the default_herd_config.yaml configuration file that is available with this script. 
+
+```{r, warning=FALSE, message=FALSE, echo=FALSE}
+# Load needed libraries:
+  
+library(here)
+library(tidyverse)
+options(dplyr.summarise.inform = FALSE)
+library(pals)
+library(yaml)
+library(purrr)
+library(igraph)
+library(osfr) # OSF Tools
+```
+
+```{r echo=FALSE}
+# authentication to save demo files: not required to run this script, may be deleted/skipped
+authentications <- yaml::read_yaml(here("local", "secrets.yaml"))
+
+# authenticate to OSF for write privileges
+osf_auth(authentications$osf_token)
+
+# project location
+osf_project_demo <- osf_retrieve_node("https://osf.io/qf2wr/")
+```
+
+## challengeABM Package       
+Simulation code is available here: [challengeABM](https://github.com/geoepi/challengeABM). The GitHub site includes an [Overview, Design concepts, Details](https://github.com/geoepi/challengeABM/blob/main/ODD_Decription.md) document.   
+```{r message=FALSE, warning=FALSE}
+# library(remotes)
+# remotes::install_github("geoepi/challengeABM")
+
+library(challengeABM)
+```
+
+## Run the simulation 
+Set random seed for reproducible runs.   
+```{r}
+seed_val <- round(runif(1, 100, 1000),0)
+seed_val 
+set.seed(seed_val)
+```
+  
+Run the simulation based using a configuration file with required parameters. Saving a copy for fast reloading of demo results.        
+```{r eval=FALSE}
+model_result <- simulate_within_herd(here("config/base_config_fmdv.yaml"),
+                                     num_donors = 2,
+                                     preclin_infect = TRUE,
+                                     contact_rate = 0.25,
+                                     seed = seed_val)
+
+saveRDS(model_result, here("local/demo/model_result_herd_2025-06-13.rds"))
+```
+  
+```{r message=FALSE, warning=FALSE, eval=FALSE, echo=FALSE}
+# Save to copy to OSF for public access
+osf_upload(osf_project_demo, path = here("local/demo/model_result_herd_2025-06-13.rds"))
+```
+
+Download saved copy from OSF
+```{r}
+osf_id <- osf_project_demo %>%
+  osf_ls_files() %>%
+  filter(name == "model_result_herd_2025-06-13.rds") # file to download
+
+osf_download(osf_id,
+             path = here("local/temp"), # where to save
+             conflicts = "overwrite")
+
+# read save file to environment
+model_result <- readRDS(here("local/temp/model_result_herd_2025-06-13.rds"))
+```
+
+
+
+## Within-Host Dynamics  
+Randomly select 21 of 100 simulated animals to view nasal and virus quantities.
+```{r fig.width=10, fig.height=10}
+plot_individual_virus_loads(model_result, sample_n = 21)
+```
+
+## Herd Outbreak Curve     
+Compare the number of infected and recovered individuals.  
+```{r fig.width=8, fig.height=8}
+plot_herd_curve(model_result)
+```

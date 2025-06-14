@@ -1,6 +1,6 @@
 ---
-title: "Incubation Phase"
-description: "Parmetric survival model for incubation phase durataion"
+title: "Phase Duration"
+description: "Survival models for incubation phase duration"
 format:
   html: 
     df-print: kable
@@ -9,7 +9,7 @@ format:
     code-overflow: wrap
     toc-title: Page Contents
     toc: true
-    toc-depth: 2
+    toc-depth: 3
     toc-location: right
     number-sections: false
     html-math-method: katex
@@ -34,7 +34,12 @@ pre {
 ```
 
 
+## Description
+The script demonstrates use of time-to-event models for estimating FMD phase durations.
+
 ```{r, warning=FALSE, message=FALSE, echo=FALSE}
+# same data prep code from `preprocessing` page
+
 library(tidyverse)
 options(dplyr.summarise.inform = FALSE)
 
@@ -63,7 +68,9 @@ antem_df <- antem_df %>%
 
 ```
 
-## Clinical Onset
+## Incubation Phase  
+  
+### Clinical Onset
 The *find_clinical_onset()* function identifies first occurrence of score > 0 then creates new "Event" column with 1 at this date, 0's before this date, and a value 3 after that date. 
 ```{r}
 clin_start_df <- as.data.frame(
@@ -71,38 +78,16 @@ clin_start_df <- as.data.frame(
 )
 ```
 
-## Prepare Data  
-Quick stats to check data
-```{r}
-unique(clin_start_df$Event)
-
-check_stats <- clin_start_df %>%
-  filter(Event == 1 & censor_status == 1)
-
-dim(check_stats)
-range(check_stats$dpe)
-mean(check_stats$dpe)
-median(check_stats$dpe)
-```
-  
-Remove Group 1
-Group 1 was not infected and has no expectation of developing disease.  Animals that were infected, verified by nasal, serum, or fever but never developed lesions are censored.  
+### Prepare Data  
+Remove Group 1: This group was not infected and has no expectation of developing disease.     
 ```{r}
 clin_start_df <- clin_start_df %>%
  filter(group != "Group 1",
          Event == 1 | censor_status == 0 & censor_k == 1)
 ```
 
-check data
-```{r}
-clin_start_df %>%
-  filter(Event == 1) %>%
-  summarise(mean_dpe = mean(dpe),
-            median_dpe = median(dpe))
-```
-  
 Scale Time  
-Add an arbitrarily small value to eliminate zeros.  Really not need with his specific data set, by an important step.  
+Add an arbitrarily small value to eliminate zeros.  Really not need with his specific data set, by an important step. 
 ```{r}
 clin_start_df$scaled_duration <- clin_start_df$dpe + 0.0001
 ```
@@ -113,7 +98,7 @@ Contact with groups by donors was sequential at 24hr intervals, shedding rates (
 shed_rates <- antem_df %>%
   filter(group == "donor") %>%
   group_by(dpi) %>%
-  summarise(tot_shed = sum(ifelse(nasal == 45, 0, nasal), na.rm=T)) %>%
+  summarise(tot_shed = sum(ifelse(nasal == 45, 0, nasal), na.rm=T)) %>% # 45 indicates non-detection
   mutate(group = paste("Group", dpi, sep=" "))
 
 # match cumulative shed from donors based on time of contact
@@ -122,20 +107,19 @@ clin_start_df$donor_shed <- with(shed_rates,
                                    clin_start_df$group,
                                                  group)])
 
-# an integer index is needed for modeling purposes, group contacts are 1:1 correlated with time
+# an integer index is needed, group contacts are correlated with time
 clin_start_df$shed_time <- as.integer(as.factor(clin_start_df$group))
 ```
 
 
-## Models  
-
-Creating a survival model object to ensure time and censored animals are correctly indicated.
+### Survival Models  
+Creating a survival model object.
 ```{r}
 surv_obj <- inla.surv(clin_start_df$scaled_duration, clin_start_df$Event)
 ```
   
 ::: panel-tabset  
-## Parametric Suvival  
+### Parametric Suvival  
 Parametric model for study-wide average duration.  
 ```{r}
 return_quants <- c(0.025, 0.05, 0.25, 0.5, 0.75, 0.95, 0.975)
@@ -157,8 +141,8 @@ incubation_dur <- inla(surv_obj ~ 1 +
                         control.compute=list(dic = TRUE, cpo = FALSE, waic = TRUE))
 ```
 
-## Accelerated Failure Time (AFT)  
-Treatment is specific to `group` therefore using `group` below to identify important differences.    
+### Accelerated Failure Time (AFT)  
+An additional confirmatory model framework.
 ```{r}
 return_quants <- c(0.025, 0.05, 0.25, 0.5, 0.75, 0.95, 0.975)
 
@@ -180,51 +164,189 @@ incubation_aft <- inla(surv_obj ~ 1 +
 
 :::
 
-## Sample Marginals
+### Sample Marginals
 Performing sampling on the parametric model results
-```{r}
+```{r message=FALSE, warning=FALSE}
 incubation_samples <- compute_survival_marginals(incubation_dur, 14)
 ```
 
 Check estimates at the 0.5 probability (median)  
 ```{r}
 median_incubation <- find_closest_quant(incubation_samples, 0.5)
-median_incubation
 ```
 
-## Survival Curve  
-Exceedance survival curve fro parametric model.  
-```{r fig.width=8, fig.height=6}
+### Incubation Curve  
+Exceedance survival curve.  
+```{r fig.width=10, fig.height=10}
 plot_survival_marginals(incubation_samples, x_max = 14, xlabel = "Incubation Phase Duration")
 ```
 
-## AFT Treament Effects 
-Get treatment-level estimated duration
-```{r}
-aft_incubation <- incubation_aft$summary.random$group[,c(1,4,6,7,8, 10)]
-names(aft_incubation) <- c("Group","Q_0.025","Q_0.25", "Q_0.5", "Q_0.75", "Q_0.975")
-mean_aft <- incubation_aft$summary.fixed$mean
-
-aft_incubation[,2:6] <- exp(aft_incubation[,2:6] + mean_aft)
-study_wide <- exp(incubation_aft$summary.fixed[,c(3,5:7,9)])
-rownames(study_wide) <- NULL
-names(study_wide) <- c("Q_0.025","Q_0.25", "Q_0.5", "Q_0.75", "Q_0.975")
-study_wide$Group <- "study"
-aft_incubation <- rbind(study_wide, aft_incubation)
-aft_incubation
-```
-  
-Compare treatment groups  
-```{r fig.width=8, fig.height=6}
-plot_aft_linerange(incubation_aft, ylabel = "Duration (days)")
-```
-
-
-
-save incubation samples
+save incubation samples:  
+These files are saved on the project's `/assets`directory for later use.  
 ```{r eval=FALSE}
 saveRDS(incubation_samples, here("assets/incubation_samples.rds"))
 saveRDS(median_incubation, here("assets/incubation_median.rds"))
 saveRDS(aft_incubation, here("assets/incubation_aft_median.rds"))
 ```
 
+## Latent Phase  
+
+### Prepare Data  
+
+Organize data
+```{r}
+latent_end_df <- antem_df %>%
+  filter(nasal >= 4.5 & nasal != 45) %>%
+  group_by(animal) %>%
+  filter(date == min(date)) %>%
+  mutate(latent_end = 1) %>%
+  ungroup()
+```
+
+Scale Time (as prior use)
+```{r}
+latent_end_df$scaled_duration <- latent_end_df$dpe + 0.0001
+```
+  
+
+### Survival Models  
+  
+Response Variable
+Creating a survival object. 
+```{r}
+surv_obj <- inla.surv(latent_end_df$scaled_duration, latent_end_df$latent_end)
+```
+  
+::: panel-tabset  
+### Parametric Suvival  
+Parametric model for study-wide average duration.
+```{r}
+return_quants <- c(0.025, 0.05, 0.25, 0.5, 0.75, 0.95, 0.975)
+
+latent_end_mod <- inla(surv_obj ~ 1,
+                        data = latent_end_df, 
+                        verbose=FALSE,
+                        quantiles = return_quants,
+                        family = "exponential.surv",
+                        control.fixed = list(prec = 1, prec.intercept  = 0.001),
+                        control.compute=list(dic = TRUE, cpo = FALSE, waic = TRUE))
+
+```
+
+
+### Accelerated Failure Time (AFT)  
+Confirmatory model for comparison. 
+```{r}
+return_quants <- c(0.025, 0.05, 0.25, 0.5, 0.75, 0.95, 0.975)
+
+pc_prec_iid <- list(theta = list(prior="pc.prec", 
+                                 param=c(1, 0.001)))
+
+latent_aft_mod <- inla(surv_obj ~ 1 +
+                       f(group,
+                           model = "iid",
+                           constr=FALSE,
+                           hyper=pc_prec_iid),
+                        data = latent_end_df, 
+                        verbose=FALSE,
+                        quantiles = return_quants,
+                        family = "lognormal.surv",
+                        control.fixed = list(prec = 1, prec.intercept  = 0.0001),
+                        control.compute=list(dic = TRUE, cpo = FALSE, waic = TRUE))
+```
+:::
+
+  
+### Sample Marginals
+Performing sampling on the model results
+```{r}
+latent_samples <- compute_survival_marginals(latent_end_mod, 7)
+```
+
+Check estimates at the 0.5 probability (median)  
+```{r}
+median_latent <- find_closest_quant(latent_samples, 0.5)
+```
+
+### Latent Curve
+```{r fig.width=8, fig.height=6, warning=FALSE, message=FALSE}
+plot_survival_marginals(latent_samples, x_max = 5, xlabel = "Latent Phase Duration")
+```
+  
+
+save latent samples:
+These files are saved on the project's `/assets`directory for later use.
+```{r eval=FALSE}
+saveRDS(latent_samples, here("assets/latent_samples_sim.rds"))
+saveRDS(median_latent, here("assets/latent_median_sim.rds"))
+saveRDS(aft_latent, here("assets/latent_aft_median_sim.rds"))
+```
+
+
+## Preclinical  
+Comparing incubation and latent phase outcomes.  
+```{r echo=FALSE} 
+# Load results from above (faster render)
+incubation_samples <- readRDS(here("assets/incubation_samples.rds"))
+latent_samples <- readRDS(here("assets/latent_samples.rds"))
+median_incubation <- readRDS(here("assets/incubation_median.rds"))
+median_latent <- readRDS(here("assets/latent_median.rds")) 
+```
+
+```{r}
+median_preclinical <- Map(function(x, y) x - y, median_incubation, median_latent)
+
+medians_df <- as.data.frame(
+  rbind(
+    Incubation = as.data.frame(median_incubation),
+    Preclinical = as.data.frame(median_preclinical),
+    Latent = as.data.frame(median_latent)
+  )
+)
+
+medians_df$Name <- rownames(medians_df)
+medians_df$Name <- ordered(factor(medians_df$Name), c("Latent", "Preclinical", "Incubation"))
+```
+  
+ 
+```{r echo=FALSE, eval=FALSE}
+# organizing AFT results  
+incubation_aft <- readRDS(here("assets/incubation_aft_median.rds"))
+latent_aft <- readRDS(here("assets/latent_aft_median.rds"))  
+
+incu_grps <- incubation_aft 
+latent_grps <- latent_aft[,3:8]
+
+subclin_grps <- incu_grps %>%
+  inner_join(latent_grps, by = "Group", suffix = c("_incu", "_latent")) %>%
+  mutate(
+    Q_0.025 = Q_0.025_incu - Q_0.025_latent,
+    Q_0.25  = Q_0.25_incu - Q_0.25_latent,
+    Q_0.5   = Q_0.5_incu - Q_0.5_latent,
+    Q_0.75  = Q_0.75_incu - Q_0.75_latent,
+    Q_0.975 = Q_0.975_incu - Q_0.975_latent,
+    Phase = "Preclinical"
+  ) %>%
+  select(Phase, Group, Q_0.025, Q_0.25, Q_0.5, Q_0.75, Q_0.975)
+
+incu_grps$Phase <- "Incubation" 
+latent_grps$Phase <- "Latent"
+  
+all_grps_w <- rbind(latent_grps, incu_grps, subclin_grps)
+
+# quick check
+plot_group_phases(all_grps_w)
+
+#save
+saveRDS(all_grps_w, here("assets/subclinical_w.rds"))
+```
+
+Plot study-wide median phases  
+```{r fig.width=8, fig.height=6}
+plot_median_phases(medians_df)
+```
+
+Plot Preclinical curve based on study-wide rates.    
+```{r fig.width=8, fig.height=8}
+plot_compare_marginals(incubation_samples, latent_samples)
+```

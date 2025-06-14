@@ -1,0 +1,98 @@
+---
+title: "Room-to-Room Transmission"
+description: "Demonstrative simulation of an FMDV challenge experiment in cattle"
+format:
+  html: 
+    df-print: kable
+    code-fold: show
+    code-summary: "Hide code"
+    code-overflow: wrap
+    toc-title: Page Contents
+    toc: true
+    toc-depth: 3
+    toc-location: right
+    number-sections: false
+    html-math-method: katex
+    smooth-scroll: true
+editor: source
+editor_options: 
+  chunk_output_type: console
+---
+```{=html}
+<style type="text/css">
+
+body, td {
+   font-size: 13pt;
+}
+code.r{
+  font-size: 9pt;
+}
+pre {
+  font-size: 11pt
+}
+</style>
+```
+
+## Description  
+The **challengeABM** package includes the *simulate_room_to_room()* function for simulating virus transmission between cattle.  At simulation start, cattle (agents) are divided among five isolated rooms, with two donor cattle in Room 1, and four cattle in each of the other rooms, Rooms 2-5.  On simulation hour 1, the two donor cattle are inoculated by a virus.  The donor cattle remain isolated from other cattle for a 24hr period, then at the 24hr mark, the donor cattle (now infected) are moved to Room 2.  At the next 24hr interval (48 hours since start of simulation), the donor cattle leave Room 2 and proceed to Room 3, where they remain for a 24hr period.  The process continues with donors moving to Room 4 at 72hrs and finally Room 5 at 96hrs. The status of individual virus loads, clinical presentation (score), and other factors are recorded on an hourly basis.   
+   
+Depending on the quantity of virus in the donor cattle and chance contacts, they may or may not infect others.  The quantity of virus in nasal passages and in blood serum has been calibrated to match the experimental study described in the analysis with parameters recorded in the base_config_fmdv.yaml configuration file that is available with this script.  
+   
+## Preliminaries  
+Load needed libraries:  
+```{r, warning=FALSE, message=FALSE, echo=TRUE}
+library(here) # directory management
+library(tidyverse) # data wrangling
+options(dplyr.summarise.inform = FALSE)
+library(pals) # color palettes for figures
+```
+
+## challengeABM Package       
+Simulation code is available here: [challengeABM](https://github.com/geoepi/challengeABM). The GitHub site includes an [Overview, Design concepts, Details](https://github.com/geoepi/challengeABM/blob/main/ODD_Decription.md) document.   
+```{r message=FALSE, warning=FALSE}
+# library(remotes)
+# remotes::install_github("geoepi/challengeABM")
+
+library(challengeABM)
+```
+
+## Run the simulation 
+Set random seed for reproducible runs.   
+```{r}
+seed_val <- round(runif(1, 100, 1000),0)
+seed_val 
+set.seed(seed_val)
+```
+  
+Run the simulation based using a configuration file with needed parameters..      
+```{r}
+model_result <- simulate_room_to_room(here("config/base_config_fmdv.yaml"), # default parameters
+                                      num_infected = 2, # modify default to ensure 2 donors (like animal experiment)
+                                      num_hours = 360) # modify default to only run 360 time steps (hours)
+```
+
+## Within-Host Dynamics  
+View change in nasal and virus quantities within individual animals.
+```{r fig.width=10, fig.height=18}
+plot_virus_loads_R2R(model_result)
+```
+
+## Status of Individual Animals   
+View the disease status of individual animals.  
+```{r fig.width=12, fig.height=10}
+plot_animal_status(model_result)
+```
+
+## Group 2  
+Running the model with the below seed will produce a comparable result to the animal experiment outcome.  
+```{r}
+set.seed(509)
+model_ctgrp2 <- simulate_room_to_room(here("config/base_config_fmdv.yaml"), 
+                                      num_infected = 2, num_hours = 360) # same as above
+```
+
+### View Group 2   
+View the disease status of Group 2 animals.  Note that donors did not become infectious until after more than 48 hours post inoculation.  As a result, Group 2 animals exposed to donors during the 24-48hour period did not become infected.  Also note that two infected animals never progressed to clinical disease.   
+```{r fig.width=12, fig.height=10}
+plot_animal_status(model_ctgrp2)
+```

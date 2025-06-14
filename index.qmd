@@ -1,6 +1,6 @@
 ---
 title: "Overview"
-description: "Analyses of preclinical FMDV transmission in cattle"
+description: "Incubation phase transmission of foot-and-mouth disease virus in cattle"
 format:
   html: 
     df-print: kable
@@ -33,9 +33,17 @@ pre {
 </style>
 ```
 
-::: {.callout-important icon=true}
-#### Under Active Development  
+::: {.callout-important icon=false}
+#### Under Peer-Review  
 
-This site includes exploratory analyses that have not been verified or validated and are subject to change.  
+This site overviews and provides demonstrative analyses for work that is currently subject to peer-review and subject to change.    
   
 ::: 
+
+## Contents:  
+- [**Data Preprocessing**](https://geoepi.github.io/fmdv-preclinical/preprocess.html): Preparing data collected during animal experiment.  
+- [**Durations**](https://geoepi.github.io/fmdv-preclinical/incubation.html): Estimating phase durations.  
+
+
+
+

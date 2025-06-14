@@ -23,13 +23,17 @@ plot_contact_groups <- function(df) {
                                levels = c("nasal", "serum", "score"),
                                labels = c("Nasal Swabs", "Serum", "Score"))
   
-  p <- ggplot(df_summary, aes(x = dpe, y = mean_value, color=group, fill=group, group=group)) +
-    geom_point(aes(shape = group, fill=group, col=group), size = 3) +
-    geom_errorbar(aes(ymin = mean_value - se, ymax = mean_value + se), 
-                  width = 0.3, col="gray30", position = position_dodge(0.02)) +
-    geom_line(linewidth =1) +
-    geom_point(aes(shape = group, fill=group, col=group), size = 3) +
-    xlim(0, 8) +
+  p <- ggplot(df_summary, aes(x = dpe*24, y = mean_value, color=group, fill=group, group=group)) +
+    annotate("rect", xmin = 0, xmax = 24, ymin = -Inf, ymax = Inf,
+             alpha = 0.5, color = NA, fill = "gray82") +
+    #annotate("text", x = 12, y = 8, label = "Exposure", color = "gray30", alpha=0.5, size = 5, fontface = "bold") +
+    geom_errorbar(aes(ymin = mean_value - se, ymax = mean_value + se, col=group), 
+                  width = 12, position = position_dodge(0.02)) +
+    geom_point(aes(shape = group, fill=group, col=group), size = 3.6) +
+    geom_line(linewidth = 1) +
+    geom_point(aes(shape = group, fill=group, col=group), size = 3.6) +
+    scale_x_continuous(breaks = seq(0, 168, 24), labels= seq(0, 168, 24), limits = c(0,170)) +
+    scale_y_continuous(labels = scales::label_number(accuracy = 0.1)) +
     xlab("Days Post Exposure (DPE)") + 
     ylab("FMDV RNA (log10 copies/ml)") +
     scale_color_manual(values = custom_colors, name = "Groups") +
@@ -37,7 +41,7 @@ plot_contact_groups <- function(df) {
     scale_shape_manual(values = custom_shapes, name = "Groups") +
     facet_wrap(~measure, ncol=1, scales = "free_y") +
     theme_minimal() +
-    theme(plot.margin = unit(c(0.5,1,0.5,1),"cm"),
+    theme(plot.margin = unit(c(0.5,0.5,0.5,0.5),"cm"),
           legend.direction = "horizontal",
           legend.position= "bottom", 
           strip.text = element_text(size=18, face="bold"),
@@ -50,7 +54,13 @@ plot_contact_groups <- function(df) {
           axis.title.y = element_text(size=24, face="bold"),
           axis.text.x = element_text(face="bold", size=18),
           axis.text.y = element_text(size=20, face="bold"),
-          plot.title = element_text(size=22, face="bold"))
+          plot.title = element_text(size=22, face="bold")
+          ) +
+    guides(
+      color = guide_legend(override.aes = list(size = 4.2)),
+      shape = guide_legend(override.aes = list(size = 4.2)),
+      fill = guide_legend(override.aes = list(size = 4.2))
+    )
   
   return(p)
 }
