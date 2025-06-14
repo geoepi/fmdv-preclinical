@@ -333,7 +333,7 @@
     "href": "index.html#contents",
     "title": "Overview",
     "section": "Contents:",
-    "text": "Contents:\n\nData Preprocessing: Preparing data collected during animal experiment.\n\nDurations: Estimating phase durations."
+    "text": "Contents:\n\nData Preprocessing: Preparing data collected during animal experiment.\n\nDurations: Estimating phase durations.\n\nRoom-to-Room: ABM Simulation of FMDV transmission through room-to-room contacts as performed during the animal experiment.\n\nWithin-Herd: ABM Simulation of FMDV transmission within a cattle herd assuming homogeneous mixing.\n\nBetween-Farm: ABM Simulation of FMDV transmission between farms related by a network. Farms are subject to quarantine and cattle movements."
   },
   {
     "objectID": "incubation.html#incubation-phase",
