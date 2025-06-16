@@ -233,9 +233,9 @@
   {
     "objectID": "index.html",
     "href": "index.html",
-    "title": "Overview",
+    "title": "FMDV Preclinical",
     "section": "",
-    "text": "Under Peer-Review\n\n\n\nThis site overviews and provides demonstrative analyses for work that is currently subject to peer-review and subject to change."
+    "text": "Under Peer-Review\n\n\n\nThis site overviews and provides demonstrative analyses for work that is currently subject to peer-review and subject to change.\n\nIncubation phase transmission of foot-and-mouth disease virus in cattle; quantitative impacts from within-host to population scales"
   },
   {
     "objectID": "preprocess.html#anova",
@@ -331,9 +331,9 @@
   {
     "objectID": "index.html#contents",
     "href": "index.html#contents",
-    "title": "Overview",
+    "title": "FMDV Preclinical",
     "section": "Contents:",
-    "text": "Contents:\n\nData Preprocessing: Preparing data collected during animal experiment.\n\nDurations: Estimating phase durations.\n\nRoom-to-Room: ABM Simulation of FMDV transmission through room-to-room contacts as performed during the animal experiment.\n\nWithin-Herd: ABM Simulation of FMDV transmission within a cattle herd assuming homogeneous mixing.\n\nBetween-Farm: ABM Simulation of FMDV transmission between farms related by a network. Farms are subject to quarantine and cattle movements."
+    "text": "Contents:\nUse the below links or tabs above to navigate to different sections of the analysis.\n- Data Preprocessing: Preparing data collected during animal experiment.\n- Durations: Estimating phase durations.\n- Room-to-Room: ABM Simulation of FMDV transmission through room-to-room contacts as performed during the animal experiment.\n- Within-Herd: ABM Simulation of FMDV transmission within a cattle herd assuming homogeneous mixing.\n- Between-Farm: ABM Simulation of FMDV transmission between farms related by a network. Farms are subject to quarantine and cattle movements."
   },
   {
     "objectID": "incubation.html#incubation-phase",
@@ -502,5 +502,12 @@
     "title": "Phase Duration",
     "section": "Preclinical",
     "text": "Preclinical\nComparing incubation and latent phase outcomes.\n\n\n\n\n\nHide code\nmedian_preclinical <- Map(function(x, y) x - y, median_incubation, median_latent)\n\nmedians_df <- as.data.frame(\n  rbind(\n    Incubation = as.data.frame(median_incubation),\n    Preclinical = as.data.frame(median_preclinical),\n    Latent = as.data.frame(median_latent)\n  )\n)\n\nmedians_df$Name <- rownames(medians_df)\nmedians_df$Name <- ordered(factor(medians_df$Name), c(\"Latent\", \"Preclinical\", \"Incubation\"))\n\n\n\n\n\nPlot study-wide median phases\n\n\nHide code\nplot_median_phases(medians_df)\n\n\n\n\n\nPlot Preclinical curve based on study-wide rates.\n\n\nHide code\nplot_compare_marginals(incubation_samples, latent_samples)"
+  },
+  {
+    "objectID": "index.html#external-resources",
+    "href": "index.html#external-resources",
+    "title": "FMDV Preclinical",
+    "section": "External Resources",
+    "text": "External Resources\nArchives of versioned data and code are available on the Open Science Framework (OSF):\nFMDV Preclinical Transmission (DOI 10.17605/OSF.IO/P6XKE)\nA simple ShinyApp demonstrating Room-to-Room simulation. Click Run Experiment to run the simulation. The simulation will take approximately 10-15 to run and then produce plots showing results. Each click of the button will run the simulation using a different seed value.\nThe manuscript describes simulations conducted with the challengeABM R-package\nOverview, Design concepts, Details for the simulation code."
   }
 ]

@@ -1,6 +1,6 @@
 ---
-title: "Overview"
-description: "Incubation phase transmission of foot-and-mouth disease virus in cattle"
+title: " "
+description: " "
 format:
   html: 
     df-print: kable
@@ -36,16 +36,34 @@ pre {
 ::: {.callout-important icon=false}
 #### Under Peer-Review  
 
-This site overviews and provides demonstrative analyses for work that is currently subject to peer-review and subject to change.    
+This site overviews and provides demonstrative analyses for work that is currently subject to peer-review and subject to change. 
+
+> Incubation phase transmission of foot-and-mouth disease virus in cattle; quantitative impacts from within-host to population scales  
   
 ::: 
 
-## Contents:  
+## Contents:   
+Use the below links or tabs above to navigate to different sections of the analysis.    
 - [**Data Preprocessing**](https://geoepi.github.io/fmdv-preclinical/preprocess.html): Preparing data collected during animal experiment.  
 - [**Durations**](https://geoepi.github.io/fmdv-preclinical/incubation.html): Estimating phase durations.  
 - [**Room-to-Room**](https://geoepi.github.io/fmdv-preclinical/rooms.html): ABM Simulation of FMDV transmission through room-to-room contacts as performed during the animal experiment.  
 - [**Within-Herd**](https://geoepi.github.io/fmdv-preclinical/herd.html): ABM Simulation of FMDV transmission within a cattle herd assuming homogeneous mixing.   
-- [**Between-Farm**](https://geoepi.github.io/fmdv-preclinical/network.html): ABM Simulation of FMDV transmission between farms related by a network. Farms are subject to quarantine and cattle movements.     
+- [**Between-Farm**](https://geoepi.github.io/fmdv-preclinical/network.html): ABM Simulation of FMDV transmission between farms related by a network. Farms are subject to quarantine and cattle movements.   
+   
+   
+## External Resources  
+Archives of versioned data and code are available on the Open Science Framework (OSF):   
+[FMDV Preclinical Transmission (DOI 10.17605/OSF.IO/P6XKE)](https://osf.io/qf2wr/) 
+
+A simple [ShinyApp demonstrating Room-to-Room simulation](https://geoepi.shinyapps.io/fmdv-preclinical/). Click *Run Experiment* to run the simulation.  The simulation will take approximately 10-15 to run and then produce plots showing results.  Each click of the button will run the simulation using a different seed value.  
+  
+The manuscript describes simulations conducted with the [**challengeABM** R-package](https://github.com/geoepi/challengeABM)  
+
+
+[Overview, Design concepts, Details](https://github.com/geoepi/challengeABM/blob/main/ODD_Decription.md) for the simulation code.   
+  
+  
+   
   
 
 
