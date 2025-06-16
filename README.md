@@ -17,6 +17,10 @@ Archives of versioned data and related supporting documents are available on the
 [FMDV Preclinical Transmission (BOV)](https://osf.io/qf2wr/)  
    
 The manuscript describes simulations conducted with the [**challengeABM** R-package](https://github.com/geoepi/challengeABM)  
+
+
+[Overview, Design concepts, Details](https://github.com/geoepi/challengeABM/blob/main/ODD_Decription.md) for simulation code   
+  
   
    
 
