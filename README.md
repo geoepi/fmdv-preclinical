@@ -35,7 +35,7 @@ Run the app and click the *Run Experiment* button. The Room-to-Room simulation w
 shiny::runApp(here("shiny/app.R"))
 ```
         
-### Supporting External Resources    
+### External Resources    
      
 A webpage based version of the code and results are available at the following link:    
 [https://geoepi.github.io/fmdv-preclinical/](https://geoepi.github.io/fmdv-preclinical/)  

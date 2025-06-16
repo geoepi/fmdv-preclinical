@@ -42,7 +42,7 @@ This site overviews and provides demonstrative analyses for work that is current
   
 ::: 
 
-## Contents:   
+## Site Contents    
 Use the below links or tabs above to navigate to different sections of the analysis.    
 - [**Data Preprocessing**](https://geoepi.github.io/fmdv-preclinical/preprocess.html): Preparing data collected during animal experiment.  
 - [**Durations**](https://geoepi.github.io/fmdv-preclinical/incubation.html): Estimating phase durations.  
@@ -55,12 +55,12 @@ Use the below links or tabs above to navigate to different sections of the analy
 Archives of versioned data and code are available on the Open Science Framework (OSF):   
 [FMDV Preclinical Transmission (DOI 10.17605/OSF.IO/P6XKE)](https://osf.io/qf2wr/) 
 
-A simple [ShinyApp demonstrating Room-to-Room simulation](https://geoepi.shinyapps.io/fmdv-preclinical/). Click *Run Experiment* to run the simulation.  The simulation will take approximately 10-15 to run and then produce plots showing results.  Each click of the button will run the simulation using a different seed value.  
+The manuscript describes simulations conducted with the [**challengeABM** R-package](https://github.com/geoepi/challengeABM)    
   
-The manuscript describes simulations conducted with the [**challengeABM** R-package](https://github.com/geoepi/challengeABM)  
+[Overview, Design concepts, Details](https://github.com/geoepi/challengeABM/blob/main/ODD_Decription.md) for the simulation code.  
 
-
-[Overview, Design concepts, Details](https://github.com/geoepi/challengeABM/blob/main/ODD_Decription.md) for the simulation code.   
+## Shiny  
+A simple [ShinyApp demonstrating Room-to-Room simulation](https://geoepi.shinyapps.io/fmdv-preclinical/). Click *Run Experiment* to run the simulation.  The simulation will take approximately 10-15 to run and then produce plots showing results.  Each click of the button will run the simulation using a different seed value.    
   
   
    

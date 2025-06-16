@@ -51,7 +51,7 @@ library(igraph)
 library(osfr) # OSF Tools
 ```
 
-```{r echo=FALSE}
+```{r echo=FALSE, warning=FALSE, message=FALSE}
 # authentication to save demo files: not required to run this script, may be deleted/skipped
 authentications <- yaml::read_yaml(here("local", "secrets.yaml"))
 

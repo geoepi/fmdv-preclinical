@@ -445,7 +445,7 @@
     "href": "network.html",
     "title": "Between-Farm Transmission",
     "section": "",
-    "text": "The challengeABM package includes the simulate_net_model() function that accepts a networkis calibrated to exhibit the same within-host virus dynamics as the simulate_room_to_room() function uses for laboratory based animal experiments. At simulation start, cattle (agents) are populated to a common area with a specified number of FMDV infected individuals. On simulation hour 1, cattle begin making random contact with each other at a specified hourly rate to show homogeneous mixing.\nDepending on the quantity of virus in the donor cattle and chance contacts, they may or may not infect others. The quantity of virus in nasal passages and in blood serum has been calibrated to match the experimental study described in the analysis with parameters recorded in the default_herd_config.yaml configuration file that is available with this script.\n\n\n\n\n\nRegistered PAT from the provided token"
+    "text": "The challengeABM package includes the simulate_net_model() function that accepts a networkis calibrated to exhibit the same within-host virus dynamics as the simulate_room_to_room() function uses for laboratory based animal experiments. At simulation start, cattle (agents) are populated to a common area with a specified number of FMDV infected individuals. On simulation hour 1, cattle begin making random contact with each other at a specified hourly rate to show homogeneous mixing.\nDepending on the quantity of virus in the donor cattle and chance contacts, they may or may not infect others. The quantity of virus in nasal passages and in blood serum has been calibrated to match the experimental study described in the analysis with parameters recorded in the default_herd_config.yaml configuration file that is available with this script."
   },
   {
     "objectID": "network.html#challengeabm-package",
@@ -508,6 +508,20 @@
     "href": "index.html#external-resources",
     "title": "FMDV Preclinical",
     "section": "External Resources",
-    "text": "External Resources\nArchives of versioned data and code are available on the Open Science Framework (OSF):\nFMDV Preclinical Transmission (DOI 10.17605/OSF.IO/P6XKE)\nA simple ShinyApp demonstrating Room-to-Room simulation. Click Run Experiment to run the simulation. The simulation will take approximately 10-15 to run and then produce plots showing results. Each click of the button will run the simulation using a different seed value.\nThe manuscript describes simulations conducted with the challengeABM R-package\nOverview, Design concepts, Details for the simulation code."
+    "text": "External Resources\nArchives of versioned data and code are available on the Open Science Framework (OSF):\nFMDV Preclinical Transmission (DOI 10.17605/OSF.IO/P6XKE)\nThe manuscript describes simulations conducted with the challengeABM R-package\nOverview, Design concepts, Details for the simulation code."
+  },
+  {
+    "objectID": "index.html#site-contents",
+    "href": "index.html#site-contents",
+    "title": "FMDV Preclinical",
+    "section": "Site Contents",
+    "text": "Site Contents\nUse the below links or tabs above to navigate to different sections of the analysis.\n- Data Preprocessing: Preparing data collected during animal experiment.\n- Durations: Estimating phase durations.\n- Room-to-Room: ABM Simulation of FMDV transmission through room-to-room contacts as performed during the animal experiment.\n- Within-Herd: ABM Simulation of FMDV transmission within a cattle herd assuming homogeneous mixing.\n- Between-Farm: ABM Simulation of FMDV transmission between farms related by a network. Farms are subject to quarantine and cattle movements."
+  },
+  {
+    "objectID": "index.html#shiny",
+    "href": "index.html#shiny",
+    "title": "FMDV Preclinical",
+    "section": "Shiny",
+    "text": "Shiny\nA simple ShinyApp demonstrating Room-to-Room simulation. Click Run Experiment to run the simulation. The simulation will take approximately 10-15 to run and then produce plots showing results. Each click of the button will run the simulation using a different seed value."
   }
 ]
