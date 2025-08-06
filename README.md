@@ -41,6 +41,8 @@ shiny::runApp(here("shiny/app.R"))
 A webpage based version of the code and results are available at the following link:    
 [https://geoepi.github.io/fmdv-preclinical/](https://geoepi.github.io/fmdv-preclinical/)  
   
+A hosted version of the *Room-to-Room* simulation is available at [geoepi.shinyapps.io/fmdv-preclinical](https://geoepi.shinyapps.io/fmdv-preclinical/)  
+  
 Archives of versioned data and related supporting documents are available on the Open Science Framework (OSF):   
 [FMDV Preclinical Transmission (BOV)](https://osf.io/qf2wr/)  
    
