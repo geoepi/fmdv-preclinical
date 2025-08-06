@@ -15,6 +15,7 @@ fmdv-preclinical/
 ├── assets/               # Executed data outputs from .qmd scripts
 ├── config/               # YAML configuration files for simulations
 ├── docs/                 # Quarto html outputs for website
+├── empiricle/            # Empiricle results from animal experiment   
 ├── herd.qmd              # Annotated demo script for within-herd simulation
 ├── incubation.qmd        # Annotated script for phase duration models
 ├── network.qmd           # Annotated demo script for between-farm simulation
