@@ -2,9 +2,9 @@
 
 ### Supporting Information  
 This site provides supporting information for the manuscript:  
-**Incubation phase transmission of foot-and-mouth disease virus in cattle; quantitative impacts from within-host to population scales**  
+**Incubation phase transmission of foot-and-mouth disease virus in cattle: experimental evidence and simulated impacts**  
   
-Stenfeldt, Humphreys, and Arzt  [*in review*]  
+Stenfeldt, Humphreys, and Arzt     [*in review*]  
 
 ---
 
