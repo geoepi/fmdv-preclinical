@@ -34,13 +34,14 @@ pre {
 ```
 
 ::: {.callout-important icon=false}
-#### Under Peer-Review  
+#### Supporting Information  
 
-This site overviews and provides demonstrative analyses for work that is currently subject to peer-review and subject to change. 
+This site overviews and provides demonstrative analyses for the published work:   
 
-### Incubation phase transmission of foot-and-mouth disease virus in cattle: experimental evidence and simulated impacts  
+### Incubation phase transmission of foot-and-mouth disease virus in cattle: Experimental evidence and simulated impacts. Scientific Reports (2026). 
+##### [https://doi.org/10.1038/s41598-025-34132-x](https://doi.org/10.1038/s41598-025-34132-x)
   
-##### Carolina Stenfeldt, John Humphreys, & Jonathan Arzt      
+##### Carolina Stenfeldt, John M. Humphreys & Jonathan Arzt      
   
 ::: 
 
