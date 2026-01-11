@@ -2,8 +2,7 @@
 
 ### Supporting Information  
 This site provides supporting information for the manuscript:  
-**Incubation phase transmission of foot-and-mouth disease virus in cattle: experimental evidence and simulated impacts. Scientific Reports (2026)**  
-[https://doi.org/10.1038/s41598-025-34132-x](https://doi.org/10.1038/s41598-025-34132-x)    
+**Incubation phase transmission of foot-and-mouth disease virus in cattle: experimental evidence and simulated impacts. Scientific Reports (2026)** [https://doi.org/10.1038/s41598-025-34132-x](https://doi.org/10.1038/s41598-025-34132-x)    
 **Carolina Stenfeldt, John M. Humphreys & Jonathan Arzt**    
     
 The [**challengeABM R-Package**](https://github.com/geoepi/challengeABM) is available [HERE](https://github.com/geoepi/challengeABM).  
